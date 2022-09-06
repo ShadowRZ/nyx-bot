@@ -108,6 +108,10 @@ def make_jerryxiao_reply(
     elif len(ref) == 3 and ref[1] == "一":
         reply = f"{room.user_name(from_sender)} {ref[0]}了{ref[1:]} {room.user_name(to_sender)}"
         reply_formatted = f"{from_pill} {ref[0]}了{ref[1:]} {to_pill}"
+    elif ref.startswith("发动"):
+        effect = ref[len("发动"):]
+        reply = f"{room.user_name(from_sender)} 向 {room.user_name(to_sender)} 发动了{effect}！"
+        reply_formatted = f"{from_pill} 向 {to_pill} 发动了{effect}！"
     else:
         reply = f"{room.user_name(from_sender)} {ref}了 {room.user_name(to_sender)}"
         reply_formatted = f"{from_pill} {ref}了 {to_pill}"
