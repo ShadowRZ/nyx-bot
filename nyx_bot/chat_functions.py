@@ -92,11 +92,26 @@ def make_pill(user_id: str, displayname: str = None) -> str:
 
 
 def make_jerryxiao_reply(
-    from_sender: str, to_sender: str, action: str, room: MatrixRoom
+    from_sender: str, to_sender: str, ref: str, room: MatrixRoom
 ):
     from_pill = make_pill(from_sender, room.user_name(from_sender))
     to_pill = make_pill(to_sender, room.user_name(to_sender))
-    return f"{from_pill} {action}了 {to_pill}"
+    reply = ""
+    reply_formatted = ""
+    if len(ref) == 2 and ref[0] == ref[1]:
+        reply = f"{room.user_name(from_sender)} {ref[0]}了{ref[1]} {room.user_name(to_sender)}"
+        reply_formatted = f"{from_pill} {ref[0]}了{ref[1]} {to_pill}"
+    elif ref.startswith("把") or ref.startswith("被"):
+        action = ref[1:].lstrip()
+        reply = f"{room.user_name(from_sender)} {ref[0]} {room.user_name(to_sender)} {action}"
+        reply_formatted = f"{from_pill} {ref[0]} {to_pill} {action}"
+    elif len(ref) == 3 and ref[1] == "一":
+        reply = f"{room.user_name(from_sender)} {ref[0]}了{ref[1:]} {room.user_name(to_sender)}"
+        reply_formatted = f"{from_pill} {ref[0]}了{ref[1:]} {to_pill}"
+    else:
+        reply = f"{room.user_name(from_sender)} {ref}了 {room.user_name(to_sender)}"
+        reply_formatted = f"{from_pill} {ref}了 {to_pill}"
+    return (reply, reply_formatted)
 
 
 async def send_in_reply_to(
@@ -143,10 +158,9 @@ async def send_jerryxiao(
             _tmp = from_sender
             from_sender = to_sender
             to_sender = _tmp
-        send_text_formatted = make_jerryxiao_reply(from_sender, to_sender, action, room)
-        send_text = (
-            f"{room.user_name(from_sender)} {action}了 {room.user_name(to_sender)}"
-        )
+        send_text_tuple = make_jerryxiao_reply(from_sender, to_sender, action, room)
+        send_text = send_text_tuple[0]
+        send_text_formatted = send_text_tuple[1]
         await send_in_reply_to(
             client, room.room_id, event, send_text, send_text_formatted
         )
