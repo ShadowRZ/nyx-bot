@@ -1,5 +1,6 @@
 import logging
 import re
+import time
 
 from nio import (
     AsyncClient,
@@ -48,6 +49,11 @@ class Callbacks:
 
         # Ignore messages from ourselves
         if event.sender == self.client.user:
+            return
+
+        # Ignore too old messages
+        current_time = int(time.time() * 1000)
+        if current_time - event.server_timestamp > 60000:
             return
 
         logger.debug(
