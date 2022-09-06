@@ -20,18 +20,18 @@ def read_file(path_segments):
         return f.read()
 
 
-version = exec_file(("my_project_name", "__init__.py"))["__version__"]
+version = exec_file(("nyx_bot", "__init__.py"))["__version__"]
 long_description = read_file(("README.md",))
 
 
 setup(
-    name="my-project-name",
+    name="nyx-bot",
     version=version,
-    url="https://github.com/anoadragon453/nio-template",
+    url="https://github.com/ShadowRZ/nyx-bot",
     description="A matrix bot to do amazing things!",
     packages=find_packages(exclude=["tests", "tests.*"]),
     install_requires=[
-        "matrix-nio[e2e]>=0.10.0",
+        "matrix-nio>=0.10.0",
         "Markdown>=3.1.1",
         "PyYAML>=5.1.2",
     ],
@@ -54,6 +54,6 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    # Allow the user to run the bot with `my-project-name ...`
-    scripts=["my-project-name"],
+    # Allow the user to run the bot with `nyx-bot ...`
+    scripts=["nyx-bot"],
 )

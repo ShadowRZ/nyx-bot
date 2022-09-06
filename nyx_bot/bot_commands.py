@@ -1,8 +1,8 @@
 from nio import AsyncClient, MatrixRoom, RoomMessageText
 
-from my_project_name.chat_functions import react_to_event, send_text_to_room
-from my_project_name.config import Config
-from my_project_name.storage import Storage
+from nyx_bot.chat_functions import react_to_event, send_text_to_room
+from nyx_bot.config import Config
+from nyx_bot.storage import Storage
 
 
 class Command:
@@ -72,7 +72,7 @@ class Command:
         """Show the help text"""
         if not self.args:
             text = (
-                "Hello, I am a bot made with matrix-nio! Use `help commands` to view "
+                "matrix-nio\nUse `help commands` to view "
                 "available commands."
             )
             await send_text_to_room(self.client, self.room.room_id, text)

@@ -1,4 +1,10 @@
-# Nio Template [![Built with matrix-nio](https://img.shields.io/badge/built%20with-matrix--nio-brightgreen)](https://github.com/poljar/matrix-nio) <a href="https://matrix.to/#/#nio-template:matrix.org"><img src="https://img.shields.io/matrix/nio-template:matrix.org?color=blue&label=Join%20the%20Matrix%20Room&server_fqdn=matrix-client.matrix.org" /></a>
+# Nyx Bot [![Built with matrix-nio](https://img.shields.io/badge/built%20with-matrix--nio-brightgreen)](https://github.com/poljar/matrix-nio) <a href="https://matrix.to/#/#nio-template:matrix.org"><img src="https://img.shields.io/matrix/nio-template:matrix.org?color=blue&label=Join%20the%20Matrix%20Room&server_fqdn=matrix-client.matrix.org" /></a>
+
+Matrix bot named after [Nyx](https://megamitensei.fandom.com/wiki/Nyx_Avatar).
+
+The rest are from the original template.
+
+---
 
 A template for creating bots with
 [matrix-nio](https://github.com/poljar/matrix-nio). The documentation for
@@ -46,7 +52,7 @@ See [SETUP.md](SETUP.md) for how to setup and run the template project.
 *A reference of each file included in the template repository, its purpose and
 what it does.*
 
-The majority of the code is kept inside of the `my_project_name` folder, which
+The majority of the code is kept inside of the `nyx_bot` folder, which
 is in itself a [python package](https://docs.python.org/3/tutorial/modules.html),
 the `__init__.py` file inside declaring it as such.
 
@@ -65,7 +71,7 @@ their needs. Be sure never to check the edited `config.yaml` into source control
 since it'll likely contain sensitive details such as passwords!
 
 Below is a detailed description of each of the source code files contained within
-the `my_project_name` directory:
+the `nyx_bot` directory:
 
 ### `main.py`
 

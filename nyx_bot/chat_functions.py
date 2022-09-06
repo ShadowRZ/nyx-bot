@@ -8,6 +8,7 @@ from nio import (
     MatrixRoom,
     MegolmEvent,
     Response,
+    RoomMessageText,
     RoomSendResponse,
     SendRetryError,
 )
@@ -88,6 +89,61 @@ def make_pill(user_id: str, displayname: str = None) -> str:
         displayname = user_id
 
     return f'<a href="https://matrix.to/#/{user_id}">{displayname}</a>'
+
+
+def make_jerryxiao_reply(
+    from_sender: str, to_sender: str, action: str, room: MatrixRoom
+):
+    from_pill = make_pill(from_sender, room.user_name(from_sender))
+    to_pill = make_pill(to_sender, room.user_name(to_sender))
+    return f"{from_pill} {action}了 {to_pill}"
+
+
+async def send_in_reply_to(
+    client: AsyncClient,
+    room_id: str,
+    event: RoomMessageText,
+    body: str,
+    formatted_body: str,
+) -> Union[RoomSendResponse, ErrorResponse]:
+    content = {
+        "msgtype": "m.text",
+        "format": "org.matrix.custom.html",
+        "body": body,
+        "formatted_body": formatted_body,
+    }
+    content["m.relates_to"] = {"m.in_reply_to": {"event_id": event.event_id}}
+    try:
+        return await client.room_send(
+            room_id,
+            "m.room.message",
+            content,
+            ignore_unverified_devices=True,
+        )
+    except SendRetryError:
+        logger.exception(f"Unable to send message response to {room_id}")
+
+
+async def send_jerryxiao(
+    client: AsyncClient,
+    room: MatrixRoom,
+    event: RoomMessageText,
+    prefix: str,
+    reply_to: str,
+    reference_text: str,
+):
+    from_sender = event.sender
+    target_event = await client.room_get_event(room.room_id, reply_to)
+    to_sender = target_event.event.sender
+    action = reference_text[len(prefix) :]
+    if action != "":
+        send_text_formatted = make_jerryxiao_reply(from_sender, to_sender, action, room)
+        send_text = (
+            f"{room.user_name(from_sender)} {action}了 {room.user_name(to_sender)}"
+        )
+        await send_in_reply_to(
+            client, room.room_id, event, send_text, send_text_formatted
+        )
 
 
 async def react_to_event(

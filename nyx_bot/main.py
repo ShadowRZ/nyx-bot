@@ -11,14 +11,13 @@ from nio import (
     InviteMemberEvent,
     LocalProtocolError,
     LoginError,
-    MegolmEvent,
     RoomMessageText,
     UnknownEvent,
 )
 
-from my_project_name.callbacks import Callbacks
-from my_project_name.config import Config
-from my_project_name.storage import Storage
+from nyx_bot.callbacks import Callbacks
+from nyx_bot.config import Config
+from nyx_bot.storage import Storage
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +43,7 @@ async def main():
         max_limit_exceeded=0,
         max_timeouts=0,
         store_sync_tokens=True,
-        encryption_enabled=True,
+        encryption_enabled=False,
     )
 
     # Initialize the matrix client
@@ -63,11 +62,10 @@ async def main():
     # Set up event callbacks
     callbacks = Callbacks(client, store, config)
     client.add_event_callback(callbacks.message, (RoomMessageText,))
+    client.add_event_callback(callbacks.unknown, (UnknownEvent,))
     client.add_event_callback(
         callbacks.invite_event_filtered_callback, (InviteMemberEvent,)
     )
-    client.add_event_callback(callbacks.decryption_failure, (MegolmEvent,))
-    client.add_event_callback(callbacks.unknown, (UnknownEvent,))
 
     # Keep trying to reconnect on failure (with some time in-between)
     while True:

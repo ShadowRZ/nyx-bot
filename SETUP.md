@@ -1,5 +1,7 @@
 # Setup
 
+_(This requires changing.)_
+
 nio-template is a sample repository of a working Matrix bot that can be taken
 and transformed into one's own bot, service or whatever else may be necessary.
 Below is a quick setup guide to running the existing bot.
