@@ -131,12 +131,18 @@ async def send_jerryxiao(
     prefix: str,
     reply_to: str,
     reference_text: str,
+    reversed_senders: bool = False,
 ):
     from_sender = event.sender
     target_event = await client.room_get_event(room.room_id, reply_to)
     to_sender = target_event.event.sender
     action = reference_text[len(prefix) :]
     if action != "":
+        if reversed_senders:
+            # Swap from and to
+            _tmp = from_sender
+            from_sender = to_sender
+            to_sender = _tmp
         send_text_formatted = make_jerryxiao_reply(from_sender, to_sender, action, room)
         send_text = (
             f"{room.user_name(from_sender)} {action}了 {room.user_name(to_sender)}"

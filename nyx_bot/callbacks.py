@@ -1,4 +1,5 @@
 import logging
+import re
 
 from nio import (
     AsyncClient,
@@ -62,7 +63,7 @@ class Callbacks:
 
         has_jerryxiao_prefix = False
         for i in msg.splitlines():
-            if i.startswith("/") or i.startswith("!!"):
+            if re.match("^(!!|\\\\|/|¡¡)", i):
                 has_jerryxiao_prefix = True
                 msg = i
                 break
@@ -72,6 +73,14 @@ class Callbacks:
                 await send_jerryxiao(self.client, room, event, "/", reply_to, msg)
             elif msg.startswith("!!"):
                 await send_jerryxiao(self.client, room, event, "!!", reply_to, msg)
+            if msg.startswith("\\"):
+                await send_jerryxiao(
+                    self.client, room, event, "\\", reply_to, msg, True
+                )
+            elif msg.startswith("¡¡"):
+                await send_jerryxiao(
+                    self.client, room, event, "¡¡", reply_to, msg, True
+                )
 
         # # Treat it as a command only if it has a prefix
         # if has_command_prefix:
