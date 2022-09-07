@@ -1,6 +1,7 @@
 import logging
 import re
 import time
+import traceback
 
 from nio import (
     AsyncClient,
@@ -11,8 +12,8 @@ from nio import (
     UnknownEvent,
 )
 
-# from nyx_bot.bot_commands import Command
-from nyx_bot.chat_functions import send_jerryxiao
+from nyx_bot.bot_commands import Command
+from nyx_bot.chat_functions import send_jerryxiao, send_text_to_room
 from nyx_bot.config import Config
 
 # from nyx_bot.message_responses import Message
@@ -68,9 +69,14 @@ class Callbacks:
         logger.debug(f"In-Reply-To: {reply_to}")
 
         has_jerryxiao_prefix = False
+        has_command_prefix = False
         for i in msg.splitlines():
             if re.match("^(!!|\\\\|/|¡¡)", i):
                 has_jerryxiao_prefix = True
+                msg = i
+                break
+            elif msg.startswith(self.command_prefix):
+                has_command_prefix = True
                 msg = i
                 break
 
@@ -79,7 +85,7 @@ class Callbacks:
                 await send_jerryxiao(self.client, room, event, "/", reply_to, msg)
             elif msg.startswith("!!"):
                 await send_jerryxiao(self.client, room, event, "!!", reply_to, msg)
-            if msg.startswith("\\"):
+            elif msg.startswith("\\"):
                 await send_jerryxiao(
                     self.client, room, event, "\\", reply_to, msg, True
                 )
@@ -87,14 +93,26 @@ class Callbacks:
                 await send_jerryxiao(
                     self.client, room, event, "¡¡", reply_to, msg, True
                 )
+            return
 
-        # # Treat it as a command only if it has a prefix
-        # if has_command_prefix:
-        #     # Remove the command prefix
-        #     msg = msg[len(self.command_prefix) :]
+        # Treat it as a command only if it has a prefix
+        if has_command_prefix:
+            # Remove the command prefix
+            msg = msg[len(self.command_prefix) :]
 
-        #     command = Command(self.client, self.store, self.config, msg, room, event)
-        #     await command.process()
+            command = Command(
+                self.client, self.store, self.config, msg, room, event, reply_to
+            )
+            try:
+                await command.process()
+            except Exception as inst:
+                lines = ["An Exception occoured:\n"]
+                lines.extend(traceback.format_exception(inst, limit=1, chain=False))
+                string = "".join(lines).rstrip()
+                await send_text_to_room(
+                    self.client, room.room_id, string, True, False, event.event_id, True
+                )
+                traceback.print_exception(inst)
 
     async def unknown(self, room: MatrixRoom, event: UnknownEvent) -> None:
         """Callback for when an event with a type that is unknown to matrix-nio is received.

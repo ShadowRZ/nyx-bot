@@ -23,6 +23,7 @@ async def send_text_to_room(
     notice: bool = True,
     markdown_convert: bool = True,
     reply_to_event_id: Optional[str] = None,
+    literal_text: Optional[bool] = False,
 ) -> Union[RoomSendResponse, ErrorResponse]:
     """Send text to a matrix room.
 
@@ -50,9 +51,11 @@ async def send_text_to_room(
 
     content = {
         "msgtype": msgtype,
-        "format": "org.matrix.custom.html",
         "body": message,
     }
+
+    if not literal_text:
+        content["format"] = "org.matrix.custom.html"
 
     if markdown_convert:
         content["formatted_body"] = markdown(message)
@@ -91,9 +94,7 @@ def make_pill(user_id: str, displayname: str = None) -> str:
     return f'<a href="https://matrix.to/#/{user_id}">{displayname}</a>'
 
 
-def make_jerryxiao_reply(
-    from_sender: str, to_sender: str, ref: str, room: MatrixRoom
-):
+def make_jerryxiao_reply(from_sender: str, to_sender: str, ref: str, room: MatrixRoom):
     from_pill = make_pill(from_sender, room.user_name(from_sender))
     to_pill = make_pill(to_sender, room.user_name(to_sender))
     reply = ""
@@ -109,8 +110,10 @@ def make_jerryxiao_reply(
         reply = f"{room.user_name(from_sender)} {ref[0]}了{ref[1:]} {room.user_name(to_sender)}"
         reply_formatted = f"{from_pill} {ref[0]}了{ref[1:]} {to_pill}"
     elif ref.startswith("发动"):
-        effect = ref[len("发动"):]
-        reply = f"{room.user_name(from_sender)} 向 {room.user_name(to_sender)} 发动了{effect}！"
+        effect = ref[len("发动") :]
+        reply = (
+            f"{room.user_name(from_sender)} 向 {room.user_name(to_sender)} 发动了{effect}！"
+        )
         reply_formatted = f"{from_pill} 向 {to_pill} 发动了{effect}！"
     else:
         reply = f"{room.user_name(from_sender)} {ref}了 {room.user_name(to_sender)}"

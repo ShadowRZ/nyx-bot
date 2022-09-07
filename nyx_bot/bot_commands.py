@@ -1,6 +1,6 @@
 from nio import AsyncClient, MatrixRoom, RoomMessageText
 
-from nyx_bot.chat_functions import react_to_event, send_text_to_room
+from nyx_bot.chat_functions import send_text_to_room
 from nyx_bot.config import Config
 from nyx_bot.storage import Storage
 
@@ -14,6 +14,7 @@ class Command:
         command: str,
         room: MatrixRoom,
         event: RoomMessageText,
+        reply_to: str,
     ):
         """A command made by a user.
 
@@ -37,13 +38,14 @@ class Command:
         self.room = room
         self.event = event
         self.args = self.command.split()[1:]
+        self.reply_to = reply_to
 
     async def process(self):
         """Process the command"""
         if self.command.startswith("echo"):
             await self._echo()
-        elif self.command.startswith("react"):
-            await self._react()
+        elif self.command.startswith("quote"):
+            await self._quote()
         elif self.command.startswith("help"):
             await self._show_help()
         else:
@@ -54,25 +56,14 @@ class Command:
         response = " ".join(self.args)
         await send_text_to_room(self.client, self.room.room_id, response)
 
-    async def _react(self):
-        """Make the bot react to the command message"""
-        # React with a start emoji
-        reaction = "⭐"
-        await react_to_event(
-            self.client, self.room.room_id, self.event.event_id, reaction
-        )
-
-        # React with some generic text
-        reaction = "Some text"
-        await react_to_event(
-            self.client, self.room.room_id, self.event.event_id, reaction
-        )
+    async def _quote(self):
+        raise NotImplementedError("TBD !")
 
     async def _show_help(self):
         """Show the help text"""
         if not self.args:
             text = (
-                "matrix-nio\nUse `help commands` to view "
+                "Nyx Bot via matrix-nio\n\nUse `help commands` to view "
                 "available commands."
             )
             await send_text_to_room(self.client, self.room.room_id, text)

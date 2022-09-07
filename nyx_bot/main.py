@@ -2,10 +2,10 @@
 import asyncio
 import logging
 import sys
+from asyncio.exceptions import TimeoutError
 from time import sleep
 
 from aiohttp import ClientConnectionError, ServerDisconnectedError
-from asyncio.exceptions import TimeoutError
 from nio import (
     AsyncClient,
     AsyncClientConfig,
