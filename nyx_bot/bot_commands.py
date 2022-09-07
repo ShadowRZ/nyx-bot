@@ -1,8 +1,12 @@
+import logging
+
 from nio import AsyncClient, MatrixRoom, RoomMessageText
 
-from nyx_bot.chat_functions import send_text_to_room
+from nyx_bot.chat_functions import send_quote_image, send_text_to_room
 from nyx_bot.config import Config
 from nyx_bot.storage import Storage
+
+logger = logging.getLogger(__name__)
 
 
 class Command:
@@ -57,7 +61,7 @@ class Command:
         await send_text_to_room(self.client, self.room.room_id, response)
 
     async def _quote(self):
-        raise NotImplementedError("TBD !")
+        await send_quote_image(self.client, self.room, self.event, self.reply_to)
 
     async def _show_help(self):
         """Show the help text"""

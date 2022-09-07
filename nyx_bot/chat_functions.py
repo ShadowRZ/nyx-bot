@@ -1,17 +1,21 @@
 import logging
+from io import BytesIO
 from typing import Optional, Union
+from urllib.parse import urlparse
 
 from markdown import markdown
 from nio import (
     AsyncClient,
     ErrorResponse,
     MatrixRoom,
-    MegolmEvent,
-    Response,
     RoomMessageText,
     RoomSendResponse,
     SendRetryError,
+    UploadResponse,
 )
+from wand.image import Image
+
+from nyx_bot.quote_image import make_quote_image
 
 logger = logging.getLogger(__name__)
 
@@ -173,65 +177,136 @@ async def send_jerryxiao(
         )
 
 
-async def react_to_event(
+async def send_quote_image(
+    client: AsyncClient,
+    room: MatrixRoom,
+    event: RoomMessageText,
+    reply_to: str,
+):
+    if not reply_to:
+        await send_text_to_room(
+            client,
+            room.room_id,
+            "Please reply to a text message.",
+            True,
+            False,
+            event.event_id,
+            True,
+        )
+        return
+    target_response = await client.room_get_event(room.room_id, reply_to)
+    target_event = target_response.event
+    if isinstance(target_event, RoomMessageText):
+        sender = target_event.sender
+        body = target_event.body
+        sender_name = room.user_name(sender)
+        sender_avatar = room.avatar_url(sender)
+        image = None
+        if sender_avatar:
+            url = urlparse(sender_avatar)
+            server_name = url.netloc
+            media_id = url.path.replace("/", "")
+            avatar_resp = await client.download(server_name, media_id)
+            data = avatar_resp.body
+            bytesio = BytesIO(data)
+            image = Image(file=bytesio)
+        else:
+            image = Image(width=64, height=64, background="#FFFF00")
+        quote_image = make_quote_image(sender_name, body, image)
+        await send_sticker_image(client, room.room_id, quote_image, reply_to)
+
+    else:
+        await send_text_to_room(
+            client,
+            room.room_id,
+            "Please reply to a normal text message.",
+            True,
+            False,
+            event.event_id,
+            True,
+        )
+
+
+async def send_sticker_image(
     client: AsyncClient,
     room_id: str,
-    event_id: str,
-    reaction_text: str,
-) -> Union[Response, ErrorResponse]:
-    """Reacts to a given event in a room with the given reaction text
+    image: Image,
+    reply_to: Optional[str] = None,
+):
+    """Send sticker to toom. Hardcodes to WebP.
 
-    Args:
-        client: The client to communicate to matrix with.
+    Arguments:
+    ---------
+    client : Client
+    room_id : str
+    image : Image
 
-        room_id: The ID of the room to send the message to.
-
-        event_id: The ID of the event to react to.
-
-        reaction_text: The string to react with. Can also be (one or more) emoji characters.
-
-    Returns:
-        A nio.Response or nio.ErrorResponse if an error occurred.
-
-    Raises:
-        SendRetryError: If the reaction was unable to be sent.
-    """
-    content = {
-        "m.relates_to": {
-            "rel_type": "m.annotation",
-            "event_id": event_id,
-            "key": reaction_text,
+    This is a working example for a JPG image.
+        "content": {
+            "body": "someimage.jpg",
+            "info": {
+                "size": 5420,
+                "mimetype": "image/jpeg",
+                "thumbnail_info": {
+                    "w": 100,
+                    "h": 100,
+                    "mimetype": "image/jpeg",
+                    "size": 2106
+                },
+                "w": 100,
+                "h": 100,
+                "thumbnail_url": "mxc://example.com/SomeStrangeThumbnailUriKey"
+            },
+            "msgtype": "m.image",
+            "url": "mxc://example.com/SomeStrangeUriKey"
         }
+
+    """
+    (width, height) = (image.width, image.height)
+
+    bytesio = BytesIO()
+    with image:
+        image.format = "webp"
+        image.save(file=bytesio)
+    length = bytesio.getbuffer().nbytes
+    bytesio.seek(0)
+    logger.debug(f'Sending Image with length {length}, width={width}, height={height}')
+
+    resp, maybe_keys = await client.upload(
+        bytesio,
+        content_type="image/webp",  # image/jpeg
+        filename="image.webp",
+        filesize=length,
+    )
+    if isinstance(resp, UploadResponse):
+        print("Image was uploaded successfully to server. ")
+    else:
+        print(f"Failed to upload image. Failure response: {resp}")
+
+    content = {
+        "body": "[Image]",
+        "info": {
+            "size": length,
+            "mimetype": "image/webp",
+            "thumbnail_info": {
+                "mimetype": "image/webp",
+                "size": length,
+                "w": width,  # width in pixel
+                "h": height,  # height in pixel
+            },
+            "w": width,  # width in pixel
+            "h": height,  # height in pixel
+            "thumbnail_url": resp.content_uri,
+        },
+        "msgtype": "m.image",
+        "url": resp.content_uri,
     }
 
-    return await client.room_send(
-        room_id,
-        "m.reaction",
-        content,
-        ignore_unverified_devices=True,
-    )
+    if reply_to:
+        content["m.relates_to"] = {"m.in_reply_to": {"event_id": reply_to}}
 
-
-async def decryption_failure(self, room: MatrixRoom, event: MegolmEvent) -> None:
-    """Callback for when an event fails to decrypt. Inform the user"""
-    logger.error(
-        f"Failed to decrypt event '{event.event_id}' in room '{room.room_id}'!"
-        f"\n\n"
-        f"Tip: try using a different device ID in your config file and restart."
-        f"\n\n"
-        f"If all else fails, delete your store directory and let the bot recreate "
-        f"it (your reminders will NOT be deleted, but the bot may respond to existing "
-        f"commands a second time)."
-    )
-
-    user_msg = (
-        "Unable to decrypt this message. "
-        "Check whether you've chosen to only encrypt to trusted devices."
-    )
-
-    await send_text_to_room(
-        self.client,
-        room.room_id,
-        user_msg,
-        reply_to_event_id=event.event_id,
-    )
+    try:
+        await client.room_send(room_id, message_type="m.sticker", content=content)
+        print("Image was sent successfully")
+    except Exception:
+        print(f"Image send of file {image} failed.")

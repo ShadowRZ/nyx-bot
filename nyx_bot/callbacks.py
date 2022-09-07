@@ -73,7 +73,7 @@ class Callbacks:
                 has_jerryxiao_prefix = True
                 msg = i
                 break
-            elif msg.startswith(self.command_prefix):
+            elif i.startswith(self.command_prefix):
                 has_command_prefix = True
                 msg = i
                 break
@@ -91,7 +91,6 @@ class Callbacks:
                 await send_jerryxiao(
                     self.client, room, event, "¡¡", reply_to, msg, True
                 )
-            return
 
         # Treat it as a command only if it has a prefix
         if has_command_prefix:
@@ -105,7 +104,7 @@ class Callbacks:
                 await command.process()
             except Exception as inst:
                 lines = ["An Exception occoured:\n"]
-                lines.extend(traceback.format_exception(inst, limit=1, chain=False))
+                lines.extend(traceback.format_exception(inst, limit=-1, chain=False))
                 string = "".join(lines).rstrip()
                 await send_text_to_room(
                     self.client, room.room_id, string, True, False, event.event_id, True
