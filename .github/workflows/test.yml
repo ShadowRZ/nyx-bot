@@ -10,29 +10,6 @@ on:
     branches: [ master ]
 
 jobs:
-  python_36:
-
-    # We need to use 20.04 to get access to the libolm3 package
-    runs-on: ubuntu-20.04
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.6
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.6
-
-      - name: Install project dependencies
-        run: |
-          # Install libolm, required for end-to-end encryption functionality
-          sudo apt install -y libolm-dev libolm3
-          # Install python dependencies
-          python setup.py install
-
-      - name: Run unit tests
-        run: |
-          python -m unittest
-
   python_39:
 
     # We need to use 20.04 to get access to the libolm3 package

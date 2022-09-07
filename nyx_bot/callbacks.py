@@ -15,8 +15,6 @@ from nio import (
 from nyx_bot.bot_commands import Command
 from nyx_bot.chat_functions import send_jerryxiao, send_text_to_room
 from nyx_bot.config import Config
-
-# from nyx_bot.message_responses import Message
 from nyx_bot.storage import Storage
 
 logger = logging.getLogger(__name__)
