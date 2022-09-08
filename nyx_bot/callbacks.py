@@ -1,7 +1,6 @@
 import logging
 import re
 import time
-import traceback
 
 from nio import (
     AsyncClient,
@@ -13,7 +12,7 @@ from nio import (
 )
 
 from nyx_bot.bot_commands import Command
-from nyx_bot.chat_functions import send_jerryxiao, send_text_to_room
+from nyx_bot.chat_functions import send_exception, send_jerryxiao
 from nyx_bot.config import Config
 from nyx_bot.storage import Storage
 
@@ -119,13 +118,7 @@ class Callbacks:
             try:
                 await command.process()
             except Exception as inst:
-                lines = ["An Exception occoured:\n"]
-                lines.extend(traceback.format_exception(inst, limit=-1, chain=False))
-                string = "".join(lines).rstrip()
-                await send_text_to_room(
-                    self.client, room.room_id, string, True, False, event.event_id, True
-                )
-                traceback.print_exception(inst)
+                await send_exception(self.client, inst, room.room_id, event.event_id)
 
     async def unknown(self, room: MatrixRoom, event: UnknownEvent) -> None:
         """Callback for when an event with a type that is unknown to matrix-nio is received.

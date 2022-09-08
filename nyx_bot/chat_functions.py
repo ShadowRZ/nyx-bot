@@ -1,4 +1,5 @@
 import logging
+import traceback
 from io import BytesIO
 from typing import Optional, Union
 from urllib.parse import urlparse
@@ -9,6 +10,7 @@ from nio import (
     AsyncClient,
     ErrorResponse,
     MatrixRoom,
+    RedactedEvent,
     RoomMessageText,
     RoomSendResponse,
     SendRetryError,
@@ -16,6 +18,7 @@ from nio import (
 )
 from wand.image import Image
 
+from nyx_bot.exceptions import NyxBotRuntimeError, NyxBotValueError
 from nyx_bot.quote_image import make_quote_image
 from nyx_bot.utils import get_body, user_name
 
@@ -187,19 +190,12 @@ async def send_quote_image(
     replace_map: dict,
 ):
     if not reply_to:
-        await send_text_to_room(
-            client,
-            room.room_id,
-            "Please reply to a text message.",
-            True,
-            False,
-            event.event_id,
-            True,
-        )
-        return
+        raise NyxBotValueError("Please reply to a text message.")
     target_response = await client.room_get_event(room.room_id, reply_to)
     target_event = target_response.event
-    if isinstance(target_event, RoomMessageText):
+    if isinstance(target_event, RedactedEvent):
+        raise NyxBotRuntimeError("This event has been redacted.")
+    elif isinstance(target_event, RoomMessageText):
         sender = target_event.sender
         body = await get_body(client, room, target_event.event_id, replace_map)
         sender_name = user_name(room, sender)
@@ -216,18 +212,13 @@ async def send_quote_image(
         else:
             image = Image(width=64, height=64, background="#FFFF00")
         quote_image = await make_quote_image(sender_name, body, image)
-        await send_sticker_image(client, room.room_id, quote_image, body, event.event_id)
+        matrixdotto_url = f"https://matrix.to/#/{room.room_id}/{event.event_id}"
+        await send_sticker_image(
+            client, room.room_id, quote_image, matrixdotto_url, event.event_id
+        )
 
     else:
-        await send_text_to_room(
-            client,
-            room.room_id,
-            "Please reply to a normal text message.",
-            True,
-            False,
-            event.event_id,
-            True,
-        )
+        raise NyxBotValueError("Please reply to a normal text message.")
 
 
 async def send_sticker_image(
@@ -332,16 +323,7 @@ async def send_user_image(
 
     """
     if not reply_to:
-        await send_text_to_room(
-            client,
-            room.room_id,
-            "This command requires replying to a message.",
-            True,
-            False,
-            event.event_id,
-            True,
-        )
-        return
+        raise NyxBotValueError("This command requires replying to a message.")
     target_response = await client.room_get_event(room.room_id, reply_to)
     target_event = target_response.event
     sender = target_event.sender
@@ -398,3 +380,30 @@ async def send_user_image(
         content["m.relates_to"] = {"m.in_reply_to": {"event_id": reply_to}}
 
     await client.room_send(room.room_id, message_type="m.room.message", content=content)
+
+
+async def send_exception(
+    client: AsyncClient,
+    inst: Exception,
+    room_id: str,
+    event_id: Optional[str] = None,
+):
+    string = ""
+    if isinstance(inst, NyxBotValueError):
+        string = f"Your input is invaild: {str(inst)}"
+    elif isinstance(inst, NyxBotRuntimeError):
+        string = f"Your request couldn't be sastified: {str(inst)}"
+    else:
+        string = f"An Exception occured:\n{type(inst).__name__}"
+        exception_str = str(inst)
+        if str != "":
+            string.append(f": {exception_str}")
+        traceback.print_exception(inst)
+    await send_text_to_room(
+        client,
+        room_id,
+        string,
+        markdown_convert=False,
+        reply_to_event_id=event_id,
+        literal_text=True,
+    )
