@@ -20,7 +20,7 @@ from wand.image import Image
 
 from nyx_bot.exceptions import NyxBotRuntimeError, NyxBotValueError
 from nyx_bot.quote_image import make_quote_image
-from nyx_bot.utils import get_body, user_name
+from nyx_bot.utils import get_body, get_reply_to, strip_beginning_quote, user_name
 
 logger = logging.getLogger(__name__)
 
@@ -198,6 +198,8 @@ async def send_quote_image(
     elif isinstance(target_event, RoomMessageText):
         sender = target_event.sender
         body = await get_body(client, room, target_event.event_id, replace_map)
+        if get_reply_to(target_event):
+            body = strip_beginning_quote(body)
         sender_name = user_name(room, sender)
         sender_avatar = room.avatar_url(sender)
         image = None

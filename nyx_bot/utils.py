@@ -1,6 +1,6 @@
 from typing import Optional
 
-from nio import AsyncClient, MatrixRoom
+from nio import AsyncClient, Event, MatrixRoom
 
 
 def user_name(room: MatrixRoom, user_id: str) -> Optional[str]:
@@ -25,3 +25,25 @@ async def get_body(
         content = target_event.source.get("content")
         new_content = content.get("m.new_content")
         return new_content.get("body")
+
+
+def strip_beginning_quote(original: str) -> str:
+    if original.startswith(">"):
+        count = 0
+        splited = original.splitlines()
+        for i in splited:
+            if i.startswith(">"):
+                count += 1
+            elif i == "":
+                count += 1
+                return "\n".join(splited[count:])
+
+    return original
+
+
+def get_reply_to(event: Event) -> Optional[str]:
+    content = event.source.get("content")
+    reply_to = ((content.get("m.relates_to") or {}).get("m.in_reply_to") or {}).get(
+        "event_id"
+    )
+    return reply_to

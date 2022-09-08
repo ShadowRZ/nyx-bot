@@ -15,6 +15,7 @@ from nyx_bot.bot_commands import Command
 from nyx_bot.chat_functions import send_exception, send_jerryxiao
 from nyx_bot.config import Config
 from nyx_bot.storage import Storage
+from nyx_bot.utils import get_reply_to
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +70,7 @@ class Callbacks:
             f"{room.user_name(event.sender)}: {msg}"
         )
 
-        reply_to = ((content.get("m.relates_to") or {}).get("m.in_reply_to") or {}).get(
-            "event_id"
-        )
+        reply_to = get_reply_to(event)
         logger.debug(f"In-Reply-To: {reply_to}")
 
         has_jerryxiao_prefix = False
