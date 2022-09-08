@@ -212,7 +212,7 @@ async def send_quote_image(
             image = Image(file=bytesio)
         else:
             image = Image(width=64, height=64, background="#FFFF00")
-        quote_image = make_quote_image(sender_name, body, image)
+        quote_image = await make_quote_image(sender_name, body, image)
         await send_sticker_image(client, room.room_id, quote_image, reply_to)
 
     else:
@@ -270,7 +270,7 @@ async def send_sticker_image(
         image.save(file=bytesio)
     length = bytesio.getbuffer().nbytes
     bytesio.seek(0)
-    logger.debug(f'Sending Image with length {length}, width={width}, height={height}')
+    logger.debug(f"Sending Image with length {length}, width={width}, height={height}")
 
     resp, maybe_keys = await client.upload(
         bytesio,
