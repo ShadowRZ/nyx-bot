@@ -35,6 +35,7 @@ setup(
         "Markdown>=3.1.1",
         "PyYAML>=5.1.2",
         "Wand",
+        "python-magic",
     ],
     extras_require={
         "postgres": ["psycopg2>=2.8.5"],

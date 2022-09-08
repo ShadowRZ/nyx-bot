@@ -2,7 +2,7 @@ import logging
 
 from nio import AsyncClient, MatrixRoom, RoomMessageText
 
-from nyx_bot.chat_functions import send_quote_image, send_text_to_room
+from nyx_bot.chat_functions import send_quote_image, send_text_to_room, send_user_image
 from nyx_bot.config import Config
 from nyx_bot.storage import Storage
 
@@ -46,22 +46,20 @@ class Command:
 
     async def process(self):
         """Process the command"""
-        if self.command.startswith("echo"):
-            await self._echo()
-        elif self.command.startswith("quote"):
+        if self.command.startswith("quote"):
             await self._quote()
+        elif self.command.startswith("send_avatar"):
+            await self._send_avatar()
         elif self.command.startswith("help"):
             await self._show_help()
         else:
             await self._unknown_command()
 
-    async def _echo(self):
-        """Echo back the command's arguments"""
-        response = " ".join(self.args)
-        await send_text_to_room(self.client, self.room.room_id, response)
-
     async def _quote(self):
         await send_quote_image(self.client, self.room, self.event, self.reply_to)
+
+    async def _send_avatar(self):
+        await send_user_image(self.client, self.room, self.event, self.reply_to)
 
     async def _show_help(self):
         """Show the help text"""
@@ -74,10 +72,8 @@ class Command:
             return
 
         topic = self.args[0]
-        if topic == "rules":
-            text = "These are the rules!"
-        elif topic == "commands":
-            text = "Available commands: ..."
+        if topic == "commands":
+            text = "Available commands:\n\n* `quote`: Make a new quote image. This command must be used on a reply.\n* `send_avatar`: Send the avatar of the person being replied to. This command must be used on a reply."
         else:
             text = "Unknown help topic!"
         await send_text_to_room(self.client, self.room.room_id, text)

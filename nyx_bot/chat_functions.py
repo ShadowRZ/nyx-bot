@@ -3,6 +3,7 @@ from io import BytesIO
 from typing import Optional, Union
 from urllib.parse import urlparse
 
+import magic
 from markdown import markdown
 from nio import (
     AsyncClient,
@@ -307,6 +308,84 @@ async def send_sticker_image(
 
     try:
         await client.room_send(room_id, message_type="m.sticker", content=content)
+        print("Image was sent successfully")
+    except Exception:
+        print(f"Image send of file {image} failed.")
+
+
+async def send_user_image(
+    client: AsyncClient,
+    room: MatrixRoom,
+    event: RoomMessageText,
+    reply_to: str,
+):
+    """Send a user's avatar to a room.
+
+    Arguments:
+    ---------
+    client : Client
+    room_id : str
+    image : Image
+
+    """
+    if not reply_to:
+        await send_text_to_room(
+            client,
+            room.room_id,
+            "This command requires replying to a message.",
+            True,
+            False,
+            event.event_id,
+            True,
+        )
+        return
+    target_response = await client.room_get_event(room.room_id, reply_to)
+    target_event = target_response.event
+    sender = target_event.sender
+    sender_name = room.user_name(sender)
+    sender_avatar = room.avatar_url(sender)
+    image = None
+    length = 0
+    mimetype = None
+    if sender_avatar:
+        url = urlparse(sender_avatar)
+        server_name = url.netloc
+        media_id = url.path.replace("/", "")
+        avatar_resp = await client.download(server_name, media_id)
+        data = avatar_resp.body
+        mimetype = magic.from_buffer(data, mime=True)
+        bytesio = BytesIO(data)
+        length = bytesio.getbuffer().nbytes
+        image = Image(file=bytesio)
+
+    (width, height) = (image.width, image.height)
+
+    content = {
+        "body": f"[Avatar of {sender_name}]",
+        "info": {
+            "size": length,
+            "mimetype": mimetype,
+            "thumbnail_info": {
+                "mimetype": mimetype,
+                "size": length,
+                "w": width,  # width in pixel
+                "h": height,  # height in pixel
+            },
+            "w": width,  # width in pixel
+            "h": height,  # height in pixel
+            "thumbnail_url": sender_avatar,
+        },
+        "msgtype": "m.image",
+        "url": sender_avatar,
+    }
+
+    if reply_to:
+        content["m.relates_to"] = {"m.in_reply_to": {"event_id": reply_to}}
+
+    try:
+        await client.room_send(
+            room.room_id, message_type="m.room.message", content=content
+        )
         print("Image was sent successfully")
     except Exception:
         print(f"Image send of file {image} failed.")

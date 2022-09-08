@@ -3,6 +3,7 @@ import os.path
 from asyncio import create_subprocess_exec
 from asyncio.subprocess import PIPE
 from html import escape
+from os import remove
 from tempfile import mkstemp
 
 from wand.drawing import Drawing
@@ -68,6 +69,7 @@ async def make_quote_image(sender: str, text: str, avatar: Image):
         draw.composite("src_over", text_x, text_y, text_width, text_height, image)
     ret = Image(width=int(width), height=int(height))
     draw(ret)
+    remove(imagefile)
     return ret
 
 
