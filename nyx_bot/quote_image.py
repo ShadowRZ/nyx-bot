@@ -12,6 +12,7 @@ from wand.image import Image
 import nyx_bot
 
 logger = logging.getLogger(__name__)
+
 TEXTBOX_PADDING_PIX = 8
 TEXTBOX_INNER_MARGIN = 2
 AVATAR_SIZE = 48
@@ -21,7 +22,7 @@ MIN_TEXTBOX_WIDTH = 256
 MASK_FILE = os.path.join(nyx_bot.__path__[0], "mask.png")
 
 PANGO_MARKUP_TEMPLATE = """\
-<span size="larger" foreground="orange" weight="bold">{}</span>
+<span size="larger" foreground="#1F4788" weight="bold">{}</span>
 {}
 """
 
@@ -56,7 +57,7 @@ async def make_quote_image(sender: str, text: str, avatar: Image):
         )
 
     # Make image
-    draw.fill_color = "#000000"
+    draw.fill_color = "#97D4EF"
     draw.stroke_width = 0
     draw.rectangle(
         textbox_x, textbox_y, width=textbox_width, height=textbox_height, radius=8
@@ -78,13 +79,14 @@ async def render_text(text: str) -> str:
     logger.debug(f"File path: {path}")
     proc = await create_subprocess_exec(
         "pango-view",
-        "--background=black",
-        "--foreground=white",
+        "--background=#97D4EF",
+        "--foreground=black",
         "--font=Noto Sans CJK SC 16",
         "--antialias=gray",
         "--margin=0",
         "--hinting=full",
-        "--subpixel-order=bgr",
+        "--width=600",
+        "--wrap=word-char",
         "--markup",
         "-q",
         "-o",

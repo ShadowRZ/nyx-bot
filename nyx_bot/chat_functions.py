@@ -200,6 +200,9 @@ async def send_quote_image(
         body = await get_body(client, room, target_event.event_id, replace_map)
         if get_reply_to(target_event):
             body = strip_beginning_quote(body)
+        if len(body) > 1000:
+            body_stripped = body[:1000]
+            body = f"{body_stripped}..."
         sender_name = user_name(room, sender)
         sender_avatar = room.avatar_url(sender)
         image = None
@@ -399,7 +402,7 @@ async def send_exception(
         string = f"An Exception occured:\n{type(inst).__name__}"
         exception_str = str(inst)
         if str != "":
-            string.append(f": {exception_str}")
+            string = f"{string}: {exception_str}"
         traceback.print_exception(inst)
     await send_text_to_room(
         client,
