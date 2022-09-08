@@ -18,11 +18,11 @@ TEXTBOX_INNER_MARGIN = 2
 AVATAR_SIZE = 48
 AVATAR_RIGHT_PADDING = 6
 BORDER_MARGIN = 8
-MIN_TEXTBOX_WIDTH = 256
+# MIN_TEXTBOX_WIDTH = 256
 MASK_FILE = os.path.join(nyx_bot.__path__[0], "mask.png")
 
 PANGO_MARKUP_TEMPLATE = """\
-<span size="larger" foreground="#1F4788" weight="bold">{}</span>
+<span size="larger" foreground="#065279" weight="bold">{}</span>
 {}
 """
 
@@ -31,13 +31,12 @@ async def make_quote_image(sender: str, text: str, avatar: Image):
     draw = Drawing()
     imagefile = await render_text(PANGO_MARKUP_TEMPLATE.format(sender, escape(text)))
     image = Image(filename=imagefile)
+    image.trim(color="#C0E5F5")
     text_width = image.width
     text_height = image.height
-    textbox_height = (TEXTBOX_PADDING_PIX * 2) + text_height + TEXTBOX_INNER_MARGIN - 8
-    # Original textbox width
-    textbox_width_orig = (TEXTBOX_PADDING_PIX * 2) + text_width
-    # Final textbox width
-    textbox_width = max(textbox_width_orig, MIN_TEXTBOX_WIDTH)
+    textbox_height = (TEXTBOX_PADDING_PIX * 2) + text_height + TEXTBOX_INNER_MARGIN
+    # Textbox width
+    textbox_width = (TEXTBOX_PADDING_PIX * 2) + text_width
     # Final calculated height
     final_height = (BORDER_MARGIN * 2) + textbox_height
     width = (BORDER_MARGIN * 2) + AVATAR_SIZE + AVATAR_RIGHT_PADDING + textbox_width
@@ -57,7 +56,7 @@ async def make_quote_image(sender: str, text: str, avatar: Image):
         )
 
     # Make image
-    draw.fill_color = "#97D4EF"
+    draw.fill_color = "#C0E5F5"
     draw.stroke_width = 0
     draw.rectangle(
         textbox_x, textbox_y, width=textbox_width, height=textbox_height, radius=8
@@ -65,7 +64,7 @@ async def make_quote_image(sender: str, text: str, avatar: Image):
 
     # Draw text
     text_x = textbox_x + TEXTBOX_PADDING_PIX
-    text_y = textbox_y + TEXTBOX_PADDING_PIX - 4
+    text_y = textbox_y + TEXTBOX_PADDING_PIX
     with image:
         draw.composite("src_over", text_x, text_y, text_width, text_height, image)
     ret = Image(width=int(width), height=int(height))
@@ -79,15 +78,15 @@ async def render_text(text: str) -> str:
     logger.debug(f"File path: {path}")
     proc = await create_subprocess_exec(
         "pango-view",
-        "--background=#97D4EF",
+        "--background=#C0E5F5",
         "--foreground=black",
-        "--font=Noto Sans CJK SC 16",
+        "--font=Source Han Sans SC 16",
         "--antialias=gray",
         "--margin=0",
         "--hinting=full",
-        "--width=600",
-        "--wrap=word-char",
         "--markup",
+        "--width=500",
+        "--wrap=word-char",
         "-q",
         "-o",
         path,

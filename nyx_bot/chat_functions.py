@@ -217,7 +217,7 @@ async def send_quote_image(
         else:
             image = Image(width=64, height=64, background="#FFFF00")
         quote_image = await make_quote_image(sender_name, body, image)
-        matrixdotto_url = f"https://matrix.to/#/{room.room_id}/{event.event_id}"
+        matrixdotto_url = f"https://matrix.to/#/{room.room_id}/{target_event.event_id}"
         await send_sticker_image(
             client, room.room_id, quote_image, matrixdotto_url, event.event_id
         )
@@ -298,7 +298,6 @@ async def send_sticker_image(
             "h": height,  # height in pixel
             "thumbnail_url": resp.content_uri,
         },
-        "msgtype": "m.image",
         "url": resp.content_uri,
     }
 
@@ -381,8 +380,7 @@ async def send_user_image(
         "url": sender_avatar,
     }
 
-    if reply_to:
-        content["m.relates_to"] = {"m.in_reply_to": {"event_id": reply_to}}
+    content["m.relates_to"] = {"m.in_reply_to": {"event_id": event.event_id}}
 
     await client.room_send(room.room_id, message_type="m.room.message", content=content)
 
