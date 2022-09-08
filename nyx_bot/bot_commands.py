@@ -19,6 +19,7 @@ class Command:
         room: MatrixRoom,
         event: RoomMessageText,
         reply_to: str,
+        replace_map: dict,
     ):
         """A command made by a user.
 
@@ -43,6 +44,7 @@ class Command:
         self.event = event
         self.args = self.command.split()[1:]
         self.reply_to = reply_to
+        self.replace_map = replace_map
 
     async def process(self):
         """Process the command"""
@@ -56,7 +58,9 @@ class Command:
             await self._unknown_command()
 
     async def _quote(self):
-        await send_quote_image(self.client, self.room, self.event, self.reply_to)
+        await send_quote_image(
+            self.client, self.room, self.event, self.reply_to, self.replace_map
+        )
 
     async def _send_avatar(self):
         await send_user_image(self.client, self.room, self.event, self.reply_to)

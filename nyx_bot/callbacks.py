@@ -34,6 +34,7 @@ class Callbacks:
         self.store = store
         self.config = config
         self.command_prefix = config.command_prefix
+        self.replace_map = {}
 
     async def message(self, room: MatrixRoom, event: RoomMessageText) -> None:
         """Callback for when a message event is received
@@ -43,6 +44,20 @@ class Callbacks:
 
             event: The event defining the message.
         """
+        # Ignore too old messages
+        current_time = int(time.time() * 1000)
+        if current_time - event.server_timestamp > 60000:
+            return
+
+        # Check if we should replace things.
+        content = event.source.get("content")
+        relates_to = content.get("m.relates_to") or {}
+        rel_type = relates_to.get("rel_type")
+        if rel_type == "m.replace":
+            event_id = relates_to.get("event_id")
+            self.replace_map[event_id] = event.event_id
+            logger.debug(f"Replace {event_id} with {event.event_id}")
+
         # Extract the message text
         msg = event.body
 
@@ -50,17 +65,11 @@ class Callbacks:
         if event.sender == self.client.user:
             return
 
-        # Ignore too old messages
-        current_time = int(time.time() * 1000)
-        if current_time - event.server_timestamp > 60000:
-            return
-
         logger.debug(
             f"Bot message received for room {room.display_name} | "
             f"{room.user_name(event.sender)}: {msg}"
         )
 
-        content = event.source.get("content")
         reply_to = ((content.get("m.relates_to") or {}).get("m.in_reply_to") or {}).get(
             "event_id"
         )
@@ -98,7 +107,14 @@ class Callbacks:
             msg = msg[len(self.command_prefix) :]
 
             command = Command(
-                self.client, self.store, self.config, msg, room, event, reply_to
+                self.client,
+                self.store,
+                self.config,
+                msg,
+                room,
+                event,
+                reply_to,
+                self.replace_map,
             )
             try:
                 await command.process()

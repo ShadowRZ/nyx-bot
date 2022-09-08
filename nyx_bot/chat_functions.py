@@ -17,6 +17,7 @@ from nio import (
 from wand.image import Image
 
 from nyx_bot.quote_image import make_quote_image
+from nyx_bot.utils import get_body, user_name
 
 logger = logging.getLogger(__name__)
 
@@ -183,6 +184,7 @@ async def send_quote_image(
     room: MatrixRoom,
     event: RoomMessageText,
     reply_to: str,
+    replace_map: dict,
 ):
     if not reply_to:
         await send_text_to_room(
@@ -199,8 +201,8 @@ async def send_quote_image(
     target_event = target_response.event
     if isinstance(target_event, RoomMessageText):
         sender = target_event.sender
-        body = target_event.body
-        sender_name = room.user_name(sender)
+        body = await get_body(client, room, target_event.event_id, replace_map)
+        sender_name = user_name(room, sender)
         sender_avatar = room.avatar_url(sender)
         image = None
         if sender_avatar:
@@ -214,7 +216,7 @@ async def send_quote_image(
         else:
             image = Image(width=64, height=64, background="#FFFF00")
         quote_image = await make_quote_image(sender_name, body, image)
-        await send_sticker_image(client, room.room_id, quote_image, reply_to)
+        await send_sticker_image(client, room.room_id, quote_image, body, event.event_id)
 
     else:
         await send_text_to_room(
@@ -232,6 +234,7 @@ async def send_sticker_image(
     client: AsyncClient,
     room_id: str,
     image: Image,
+    body: str,
     reply_to: Optional[str] = None,
 ):
     """Send sticker to toom. Hardcodes to WebP.
@@ -285,7 +288,7 @@ async def send_sticker_image(
         print(f"Failed to upload image. Failure response: {resp}")
 
     content = {
-        "body": "[Image]",
+        "body": body,
         "info": {
             "size": length,
             "mimetype": "image/webp",
@@ -357,8 +360,20 @@ async def send_user_image(
         bytesio = BytesIO(data)
         length = bytesio.getbuffer().nbytes
         image = Image(file=bytesio)
+    else:
+        await send_text_to_room(
+            client,
+            room.room_id,
+            "This user has no avatar.",
+            True,
+            False,
+            event.event_id,
+            True,
+        )
+        return
 
-    (width, height) = (image.width, image.height)
+    with image:
+        (width, height) = (image.width, image.height)
 
     content = {
         "body": f"[Avatar of {sender_name}]",
@@ -382,10 +397,4 @@ async def send_user_image(
     if reply_to:
         content["m.relates_to"] = {"m.in_reply_to": {"event_id": reply_to}}
 
-    try:
-        await client.room_send(
-            room.room_id, message_type="m.room.message", content=content
-        )
-        print("Image was sent successfully")
-    except Exception:
-        print(f"Image send of file {image} failed.")
+    await client.room_send(room.room_id, message_type="m.room.message", content=content)
