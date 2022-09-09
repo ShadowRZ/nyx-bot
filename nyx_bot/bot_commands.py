@@ -2,7 +2,12 @@ import logging
 
 from nio import AsyncClient, MatrixRoom, RoomMessageImage, RoomMessageText, StickerEvent
 
-from nyx_bot.chat_functions import send_quote_image, send_text_to_room, send_user_image
+from nyx_bot.chat_functions import (
+    send_multiquote_image,
+    send_quote_image,
+    send_text_to_room,
+    send_user_image,
+)
 from nyx_bot.config import Config
 from nyx_bot.errors import NyxBotValueError
 from nyx_bot.storage import MatrixMessage
@@ -48,6 +53,8 @@ class Command:
         """Process the command"""
         if self.command.startswith("quote"):
             await self._quote()
+        if self.command.startswith("multiquote"):
+            await self._multiquote()
         elif self.command.startswith("send_avatar"):
             await self._send_avatar()
         elif self.command.startswith("send_as_sticker"):
@@ -67,6 +74,25 @@ class Command:
             self.client,
             self.room,
             self.event,
+            self.reply_to,
+            self.replace_map,
+        )
+
+    async def _multiquote(self):
+        """Make a new multiquote image. This command must be used on a reply."""
+        limit = 3
+        if self.args:
+            try:
+                limit = int(self.args[0])
+            except ValueError as e:
+                raise NyxBotValueError("Please specify a integer.") from e
+        if not (2 <= limit <= 6):
+            raise NyxBotValueError("Please specify a integer in range [2, 6].")
+        await send_multiquote_image(
+            self.client,
+            self.room,
+            self.event,
+            limit,
             self.reply_to,
             self.replace_map,
         )
@@ -178,6 +204,7 @@ Available commands:
 * `quote`: Make a new quote image. This command must be used on a reply.
 * `send_avatar`: Send the avatar of the person being replied to. This command must be used on a reply.
 * `send_as_sticker`: Turn an image into a sticker. This command must be used on a reply.
+* `multiquote [count]`: (count is in [2, 6]) Make a new multiquote image. This command must be used on a reply.
 """
         else:
             text = "Unknown help topic!"

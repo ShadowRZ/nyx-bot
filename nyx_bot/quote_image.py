@@ -74,7 +74,8 @@ async def make_quote_image(
     with image:
         draw.composite("src_over", text_x, text_y, text_width, text_height, image)
     ret = Image(width=int(width), height=int(height))
-    draw(ret)
+    with draw:
+        draw(ret)
     remove(imagefile)
     return ret
 
