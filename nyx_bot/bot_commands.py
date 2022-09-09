@@ -1,5 +1,8 @@
 import logging
+from calendar import THURSDAY
+from datetime import date
 
+from dateutil.relativedelta import relativedelta
 from nio import AsyncClient, MatrixRoom, RoomMessageImage, RoomMessageText, StickerEvent
 
 from nyx_bot.chat_functions import (
@@ -53,10 +56,12 @@ class Command:
         """Process the command"""
         if self.command.startswith("quote"):
             await self._quote()
-        if self.command.startswith("multiquote"):
+        elif self.command.startswith("multiquote"):
             await self._multiquote()
         elif self.command.startswith("send_avatar"):
             await self._send_avatar()
+        elif self.command.startswith("crazy_thursday"):
+            await self._crazy_thursday()
         elif self.command.startswith("send_as_sticker"):
             await self._send_as_sticker()
         elif self.command.startswith("emit_statistics"):
@@ -105,6 +110,25 @@ class Command:
             .count()
         )
         string = f"Total counted messages: {count}\nThis room: {room_count}"
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            string,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
+
+    async def _crazy_thursday(self):
+        today = date.today()
+        next_thursday = today + relativedelta(weekday=THURSDAY)
+        if today == next_thursday:
+            string = "Crazy Thursday !!"
+        else:
+            dt = next_thursday - today
+            string = (
+                f"Time until next thursday ({next_thursday.isoformat()}): {str(dt)}"
+            )
         await send_text_to_room(
             self.client,
             self.room.room_id,

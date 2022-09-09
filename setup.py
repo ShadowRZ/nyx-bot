@@ -37,6 +37,7 @@ setup(
         "Wand",
         "python-magic",
         "peewee",
+        "python-dateutil",
     ],
     extras_require={
         "postgres": ["psycopg2>=2.8.5"],
