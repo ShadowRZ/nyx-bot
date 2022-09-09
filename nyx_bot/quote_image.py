@@ -27,9 +27,13 @@ PANGO_MARKUP_TEMPLATE = """\
 """
 
 
-async def make_quote_image(sender: str, text: str, avatar: Image):
+async def make_quote_image(sender: str, text: str, avatar: Image, formatted: bool):
     draw = Drawing()
-    imagefile = await render_text(PANGO_MARKUP_TEMPLATE.format(sender, escape(text)))
+    draw_text = escape(text)
+    if formatted:
+        # If formatted, this message should be already formatted.
+        draw_text = text
+    imagefile = await render_text(PANGO_MARKUP_TEMPLATE.format(sender, draw_text))
     image = Image(filename=imagefile)
     image.trim(color="#C0E5F5")
     text_width = image.width

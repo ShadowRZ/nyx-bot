@@ -58,8 +58,17 @@ class Command:
             await self._unknown_command()
 
     async def _quote(self):
+        formatted = False
+        if self.args:
+            if self.args[0] == "/formatted":
+                formatted = True
         await send_quote_image(
-            self.client, self.room, self.event, self.reply_to, self.replace_map
+            self.client,
+            self.room,
+            self.event,
+            self.reply_to,
+            self.replace_map,
+            formatted,
         )
 
     async def _send_avatar(self):

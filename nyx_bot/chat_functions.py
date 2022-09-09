@@ -19,8 +19,15 @@ from nio import (
 from wand.image import Image
 
 from nyx_bot.exceptions import NyxBotRuntimeError, NyxBotValueError
+from nyx_bot.parsers import MatrixHTMLParser
 from nyx_bot.quote_image import make_quote_image
-from nyx_bot.utils import get_body, get_reply_to, strip_beginning_quote, user_name
+from nyx_bot.utils import (
+    get_body,
+    get_formatted_body,
+    get_reply_to,
+    strip_beginning_quote,
+    user_name,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +195,7 @@ async def send_quote_image(
     event: RoomMessageText,
     reply_to: str,
     replace_map: dict,
+    formatted: bool,
 ):
     if not reply_to:
         raise NyxBotValueError("Please reply to a text message.")
@@ -197,12 +205,23 @@ async def send_quote_image(
         raise NyxBotRuntimeError("This event has been redacted.")
     elif isinstance(target_event, RoomMessageText):
         sender = target_event.sender
-        body = await get_body(client, room, target_event.event_id, replace_map)
-        if get_reply_to(target_event):
-            body = strip_beginning_quote(body)
-        if len(body) > 1000:
-            body_stripped = body[:1000]
-            body = f"{body_stripped}..."
+        body = ""
+        if formatted:
+            formatted_body = await get_formatted_body(
+                client, room, target_event.event_id, replace_map
+            )
+            if not formatted_body:
+                raise NyxBotValueError("This message has no formatted body.")
+            parser = MatrixHTMLParser()
+            parser.feed(formatted_body)
+            body = parser.into_pango_markup()
+        else:
+            body = await get_body(client, room, target_event.event_id, replace_map)
+            if get_reply_to(target_event):
+                body = strip_beginning_quote(body)
+            if len(body) > 1000:
+                body_stripped = body[:1000]
+                body = f"{body_stripped}..."
         sender_name = user_name(room, sender)
         sender_avatar = room.avatar_url(sender)
         image = None
@@ -216,7 +235,7 @@ async def send_quote_image(
             image = Image(file=bytesio)
         else:
             image = Image(width=64, height=64, background="#FFFF00")
-        quote_image = await make_quote_image(sender_name, body, image)
+        quote_image = await make_quote_image(sender_name, body, image, formatted)
         matrixdotto_url = f"https://matrix.to/#/{room.room_id}/{target_event.event_id}"
         await send_sticker_image(
             client, room.room_id, quote_image, matrixdotto_url, event.event_id
