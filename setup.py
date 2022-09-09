@@ -31,11 +31,12 @@ setup(
     description="A matrix bot to do amazing things!",
     packages=find_packages(exclude=["tests", "tests.*"]),
     install_requires=[
-        "matrix-nio>=0.10.0",
+        "matrix-nio[e2e]>=0.10.0",
         "Markdown>=3.1.1",
         "PyYAML>=5.1.2",
         "Wand",
         "python-magic",
+        "peewee",
     ],
     extras_require={
         "postgres": ["psycopg2>=2.8.5"],

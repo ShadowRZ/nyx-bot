@@ -14,25 +14,22 @@ from nio import (
 from nyx_bot.bot_commands import Command
 from nyx_bot.chat_functions import send_exception, send_jerryxiao
 from nyx_bot.config import Config
-from nyx_bot.storage import Storage
 from nyx_bot.utils import get_reply_to
 
 logger = logging.getLogger(__name__)
 
 
 class Callbacks:
-    def __init__(self, client: AsyncClient, store: Storage, config: Config):
+    def __init__(self, client: AsyncClient, config: Config):
         """
         Args:
             client: nio client used to interact with matrix.
 
-            store: Bot storage.
-
             config: Bot configuration parameters.
         """
         self.client = client
-        self.store = store
         self.config = config
+        self.disable_jerryxiao_for = config.disable_jerryxiao_for
         self.command_prefix = config.command_prefix
         self.replace_map = {}
 
@@ -85,6 +82,10 @@ class Callbacks:
                 msg = i
                 break
 
+        if room.room_id in self.disable_jerryxiao_for:
+            # Stop considering JerryXiao prefix.
+            has_jerryxiao_prefix = False
+
         if has_jerryxiao_prefix and reply_to:
             if msg.startswith("/"):
                 await send_jerryxiao(self.client, room, event, "/", reply_to, msg)
@@ -106,7 +107,6 @@ class Callbacks:
 
             command = Command(
                 self.client,
-                self.store,
                 self.config,
                 msg,
                 room,

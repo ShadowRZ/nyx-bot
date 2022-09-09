@@ -22,7 +22,7 @@ BORDER_MARGIN = 8
 MASK_FILE = os.path.join(nyx_bot.__path__[0], "mask.png")
 
 PANGO_MARKUP_TEMPLATE = """\
-<span size="larger" foreground="#065279" weight="bold">{}</span>
+<span size="larger" foreground="#1F4788" weight="bold">{}</span>
 {}
 """
 

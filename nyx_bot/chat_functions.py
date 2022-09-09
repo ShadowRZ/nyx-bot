@@ -18,7 +18,7 @@ from nio import (
 )
 from wand.image import Image
 
-from nyx_bot.exceptions import NyxBotRuntimeError, NyxBotValueError
+from nyx_bot.errors import NyxBotRuntimeError, NyxBotValueError
 from nyx_bot.parsers import MatrixHTMLParser
 from nyx_bot.quote_image import make_quote_image
 from nyx_bot.utils import (

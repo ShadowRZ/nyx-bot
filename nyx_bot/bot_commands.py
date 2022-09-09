@@ -4,8 +4,7 @@ from nio import AsyncClient, MatrixRoom, RoomMessageImage, RoomMessageText, Stic
 
 from nyx_bot.chat_functions import send_quote_image, send_text_to_room, send_user_image
 from nyx_bot.config import Config
-from nyx_bot.exceptions import NyxBotValueError
-from nyx_bot.storage import Storage
+from nyx_bot.errors import NyxBotValueError
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +13,6 @@ class Command:
     def __init__(
         self,
         client: AsyncClient,
-        store: Storage,
         config: Config,
         command: str,
         room: MatrixRoom,
@@ -27,8 +25,6 @@ class Command:
         Args:
             client: The client to communicate to matrix with.
 
-            store: Bot storage.
-
             config: Bot configuration parameters.
 
             command: The command and arguments.
@@ -38,7 +34,6 @@ class Command:
             event: The event describing the command.
         """
         self.client = client
-        self.store = store
         self.config = config
         self.command = command
         self.room = room
@@ -107,7 +102,9 @@ class Command:
                 f"https://matrix.to/#/{self.room.room_id}/{target_event.event_id}"
             )
             content["body"] = f"Sticker of {matrixdotto_url}"
-            content["m.relates_to"] = {"m.in_reply_to": {"event_id": self.event.event_id}}
+            content["m.relates_to"] = {
+                "m.in_reply_to": {"event_id": self.event.event_id}
+            }
             await self.client.room_send(
                 self.room.room_id, message_type="m.sticker", content=content
             )

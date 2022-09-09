@@ -105,6 +105,10 @@ class Config:
 
         self.command_prefix = self._get_cfg(["command_prefix"], default="!c") + " "
 
+        self.disable_jerryxiao_for = self._get_cfg(['disable_jerryxiao_for'], [])
+        if isinstance(self.disable_jerryxiao_for, list):
+            raise ConfigError("disable_jerryxiao_for should be a list of room ID")
+
     def _get_cfg(
         self,
         path: List[str],
@@ -134,3 +138,14 @@ class Config:
 
         # We found the option. Return it.
         return config
+
+
+# Read user-configured options from a config file.
+# A different config file path can be specified as the first command line argument
+if len(sys.argv) > 1:
+    config_path = sys.argv[1]
+else:
+    config_path = "config.yaml"
+
+# Read the parsed config file and create a Config object
+config = Config(config_path)

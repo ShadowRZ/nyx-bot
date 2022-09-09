@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
 import logging
-import sys
 from asyncio.exceptions import TimeoutError
 from time import sleep
 
@@ -15,10 +14,10 @@ from nio import (
     RoomMessageText,
     UnknownEvent,
 )
+from nio.store.database import DefaultStore
 
 from nyx_bot.callbacks import Callbacks
-from nyx_bot.config import Config
-from nyx_bot.storage import Storage
+from nyx_bot.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -26,23 +25,11 @@ logger = logging.getLogger(__name__)
 async def main():
     """The first function that is run when starting the bot"""
 
-    # Read user-configured options from a config file.
-    # A different config file path can be specified as the first command line argument
-    if len(sys.argv) > 1:
-        config_path = sys.argv[1]
-    else:
-        config_path = "config.yaml"
-
-    # Read the parsed config file and create a Config object
-    config = Config(config_path)
-
-    # Configure the database
-    store = Storage(config.database)
-
     # Configuration options for the AsyncClient
     client_config = AsyncClientConfig(
         max_limit_exceeded=0,
         max_timeouts=0,
+        store=DefaultStore,
         store_sync_tokens=True,
         encryption_enabled=False,
     )
@@ -61,7 +48,7 @@ async def main():
         client.user_id = config.user_id
 
     # Set up event callbacks
-    callbacks = Callbacks(client, store, config)
+    callbacks = Callbacks(client, config)
     client.add_event_callback(callbacks.message, (RoomMessageText,))
     client.add_event_callback(callbacks.unknown, (UnknownEvent,))
     client.add_event_callback(

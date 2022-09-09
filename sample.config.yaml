@@ -47,3 +47,7 @@ logging:
   console_logging:
     # Whether logging to the console is enabled
     enabled: true
+
+# Disable Jerry Xiao like feature for the following room ID
+disable_jerryxiao_for:
+  - '!XXXXXXXXXXXXXXXXXX:example.com'
