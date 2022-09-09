@@ -102,7 +102,7 @@ def parse_matrixdotto_link(link: str):
         elif identifier.startswith("!"):
             # Room ID
             type_ = "room"
-        elif parsed.path == '/':
+        elif parsed.path == "/":
             # Named Room
             type_ = "room_named"
             identifier = f"#{parsed.fragment}"

@@ -5,6 +5,7 @@ from asyncio.subprocess import PIPE
 from html import escape
 from os import remove
 from tempfile import mkstemp
+from typing import Optional
 
 from wand.drawing import Drawing
 from wand.image import Image
@@ -20,19 +21,20 @@ BORDER_MARGIN = 8
 # MIN_TEXTBOX_WIDTH = 256
 MASK_FILE = os.path.join(nyx_bot.__path__[0], "mask.png")
 
-PANGO_MARKUP_TEMPLATE = """\
-<span size="larger" foreground="#1F4788" weight="bold">{}</span>
-{}
-"""
 
-
-async def make_quote_image(sender: str, text: str, avatar: Image, formatted: bool):
+async def make_quote_image(
+    sender: Optional[str], text: str, avatar: Optional[Image], formatted: bool
+) -> Image:
     draw = Drawing()
-    draw_text = escape(text)
+    draw_text = ""
+    if sender:
+        draw_text += f"""<span size="larger" foreground="#1f4788" weight="bold">{sender}</span>\n"""
     if formatted:
         # If formatted, this message should be already formatted.
-        draw_text = text
-    imagefile = await render_text(PANGO_MARKUP_TEMPLATE.format(sender, draw_text))
+        draw_text += text
+    else:
+        draw_text += escape(text)
+    imagefile = await render_text(draw_text)
     image = Image(filename=imagefile)
     image.trim(color="#C0E5F5")
     text_width = image.width
@@ -50,13 +52,14 @@ async def make_quote_image(sender: str, text: str, avatar: Image, formatted: boo
     textbox_y = BORDER_MARGIN
 
     # Make a mask
-    with avatar.clone() as img, Image(filename=MASK_FILE) as mask:
-        img.resize(AVATAR_SIZE, AVATAR_SIZE)
-        img.alpha_channel = True
-        img.composite_channel("default", mask, "copy_alpha", 0, 0)
-        draw.composite(
-            "overlay", BORDER_MARGIN, BORDER_MARGIN, AVATAR_SIZE, AVATAR_SIZE, img
-        )
+    if avatar:
+        with avatar.clone() as img, Image(filename=MASK_FILE) as mask:
+            img.resize(AVATAR_SIZE, AVATAR_SIZE)
+            img.alpha_channel = True
+            img.composite_channel("default", mask, "copy_alpha", 0, 0)
+            draw.composite(
+                "overlay", BORDER_MARGIN, BORDER_MARGIN, AVATAR_SIZE, AVATAR_SIZE, img
+            )
 
     # Make image
     draw.fill_color = "#C0E5F5"

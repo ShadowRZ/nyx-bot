@@ -196,35 +196,52 @@ async def send_quote_image(
     reply_to: str,
     replace_map: dict,
 ):
-    if not reply_to:
-        raise NyxBotValueError("Please reply to a text message.")
     target_response = await client.room_get_event(room.room_id, reply_to)
     target_event = target_response.event
     if isinstance(target_event, RedactedEvent):
-        raise NyxBotRuntimeError("This event has been redacted.")
+        raise NyxBotRuntimeError("Event has been redacted.")
     elif isinstance(target_event, RoomMessageText):
-        sender = target_event.sender
-        body = ""
-        formatted = True
-        formatted_body = await get_formatted_body(
-            client, room, target_event.event_id, replace_map
+        quote_image = await make_single_quote_image(
+            client, room, target_event, replace_map, True
         )
-        if not formatted_body:
-            formatted = False
-        if formatted:
-            parser = MatrixHTMLParser()
-            parser.feed(formatted_body)
-            body = parser.into_pango_markup()
-        else:
-            body = await get_body(client, room, target_event.event_id, replace_map)
-            if get_reply_to(target_event):
-                body = strip_beginning_quote(body)
-            if len(body) > 1000:
-                body_stripped = body[:1000]
-                body = f"{body_stripped}..."
-        sender_name = user_name(room, sender)
-        sender_avatar = room.avatar_url(sender)
-        image = None
+        matrixdotto_url = f"https://matrix.to/#/{room.room_id}/{target_event.event_id}"
+        await send_sticker_image(
+            client, room.room_id, quote_image, matrixdotto_url, event.event_id
+        )
+    else:
+        raise NyxBotValueError("Please reply to a normal text message.")
+
+
+async def make_single_quote_image(
+    client: AsyncClient,
+    room: MatrixRoom,
+    target_event: RoomMessageText,
+    replace_map: dict,
+    show_user: bool = True,
+) -> Image:
+    sender = target_event.sender
+    body = ""
+    formatted = True
+    formatted_body = await get_formatted_body(
+        client, room, target_event.event_id, replace_map
+    )
+    if not formatted_body:
+        formatted = False
+    if formatted:
+        parser = MatrixHTMLParser()
+        parser.feed(formatted_body)
+        body = parser.into_pango_markup()
+    else:
+        body = await get_body(client, room, target_event.event_id, replace_map)
+        if get_reply_to(target_event):
+            body = strip_beginning_quote(body)
+        if len(body) > 1000:
+            body_stripped = body[:1000]
+            body = f"{body_stripped}..."
+    sender_name = user_name(room, sender)
+    sender_avatar = room.avatar_url(sender)
+    image = None
+    if show_user:
         if sender_avatar:
             url = urlparse(sender_avatar)
             server_name = url.netloc
@@ -235,14 +252,10 @@ async def send_quote_image(
             image = Image(file=bytesio)
         else:
             image = Image(width=64, height=64, background="#FFFF00")
-        quote_image = await make_quote_image(sender_name, body, image, formatted)
-        matrixdotto_url = f"https://matrix.to/#/{room.room_id}/{target_event.event_id}"
-        await send_sticker_image(
-            client, room.room_id, quote_image, matrixdotto_url, event.event_id
-        )
-
     else:
-        raise NyxBotValueError("Please reply to a normal text message.")
+        sender_name = None
+    quote_image = await make_quote_image(sender_name, body, image, formatted)
+    return quote_image
 
 
 async def send_sticker_image(
