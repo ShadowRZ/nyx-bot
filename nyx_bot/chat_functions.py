@@ -195,7 +195,6 @@ async def send_quote_image(
     event: RoomMessageText,
     reply_to: str,
     replace_map: dict,
-    formatted: bool,
 ):
     if not reply_to:
         raise NyxBotValueError("Please reply to a text message.")
@@ -206,12 +205,13 @@ async def send_quote_image(
     elif isinstance(target_event, RoomMessageText):
         sender = target_event.sender
         body = ""
+        formatted = True
+        formatted_body = await get_formatted_body(
+            client, room, target_event.event_id, replace_map
+        )
+        if not formatted_body:
+            formatted = False
         if formatted:
-            formatted_body = await get_formatted_body(
-                client, room, target_event.event_id, replace_map
-            )
-            if not formatted_body:
-                raise NyxBotValueError("This message has no formatted body.")
             parser = MatrixHTMLParser()
             parser.feed(formatted_body)
             body = parser.into_pango_markup()

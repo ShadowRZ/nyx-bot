@@ -106,8 +106,6 @@ class Config:
         self.command_prefix = self._get_cfg(["command_prefix"], default="!c") + " "
 
         self.disable_jerryxiao_for = self._get_cfg(['disable_jerryxiao_for'], [])
-        if isinstance(self.disable_jerryxiao_for, list):
-            raise ConfigError("disable_jerryxiao_for should be a list of room ID")
 
     def _get_cfg(
         self,
