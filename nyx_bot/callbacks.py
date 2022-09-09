@@ -14,7 +14,8 @@ from nio import (
 from nyx_bot.bot_commands import Command
 from nyx_bot.chat_functions import send_exception, send_jerryxiao
 from nyx_bot.config import Config
-from nyx_bot.utils import get_reply_to
+from nyx_bot.storage import MatrixMessage
+from nyx_bot.utils import get_external_url, get_replaces, get_reply_to, make_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -41,19 +42,39 @@ class Callbacks:
 
             event: The event defining the message.
         """
+        event_replace = get_replaces(event)
+        message_db_item = MatrixMessage.get_or_none(
+            (MatrixMessage.room_id == room.room_id)
+            & (MatrixMessage.event_id == event.event_id)
+        )
+        if not message_db_item:
+            message_db_item = MatrixMessage()
+        message_db_item.room_id = room.room_id
+        message_db_item.event_id = event.event_id
+        message_db_item.origin_server_ts = event.server_timestamp
+        message_db_item.external_url = get_external_url(event)
+        message_db_item.sender = event.sender
+        ts_obj = make_datetime(event.server_timestamp)
+        message_db_item.datetime = ts_obj
+        message_db_item.date = ts_obj.date()
+        if event_replace:
+            message_db_item.is_replacement = True
+        message_db_item.save()
         # Ignore too old messages
         current_time = int(time.time() * 1000)
         if current_time - event.server_timestamp > 60000:
             return
 
         # Check if we should replace things.
-        content = event.source.get("content")
-        relates_to = content.get("m.relates_to") or {}
-        rel_type = relates_to.get("rel_type")
-        if rel_type == "m.replace":
-            event_id = relates_to.get("event_id")
-            self.replace_map[event_id] = event.event_id
-            logger.debug(f"Replace {event_id} with {event.event_id}")
+        if event_replace:
+            self.replace_map[event_replace] = event.event_id
+            replace_item = MatrixMessage.get_or_none(
+                (MatrixMessage.room_id == room.room_id)
+                & (MatrixMessage.event_id == event_replace)
+            )
+            if replace_item:
+                replace_item.replaced_by = event.event_id
+                replace_item.save()
 
         # Extract the message text
         msg = event.body

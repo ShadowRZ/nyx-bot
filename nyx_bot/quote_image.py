@@ -13,8 +13,7 @@ import nyx_bot
 
 logger = logging.getLogger(__name__)
 
-TEXTBOX_PADDING_PIX = 8
-TEXTBOX_INNER_MARGIN = 2
+TEXTBOX_PADDING_PIX = 16
 AVATAR_SIZE = 48
 AVATAR_RIGHT_PADDING = 6
 BORDER_MARGIN = 8
@@ -38,7 +37,7 @@ async def make_quote_image(sender: str, text: str, avatar: Image, formatted: boo
     image.trim(color="#C0E5F5")
     text_width = image.width
     text_height = image.height
-    textbox_height = (TEXTBOX_PADDING_PIX * 2) + text_height + TEXTBOX_INNER_MARGIN
+    textbox_height = (TEXTBOX_PADDING_PIX * 2) + text_height
     # Textbox width
     textbox_width = (TEXTBOX_PADDING_PIX * 2) + text_width
     # Final calculated height
@@ -63,7 +62,7 @@ async def make_quote_image(sender: str, text: str, avatar: Image, formatted: boo
     draw.fill_color = "#C0E5F5"
     draw.stroke_width = 0
     draw.rectangle(
-        textbox_x, textbox_y, width=textbox_width, height=textbox_height, radius=8
+        textbox_x, textbox_y, width=textbox_width, height=textbox_height, radius=16
     )
 
     # Draw text

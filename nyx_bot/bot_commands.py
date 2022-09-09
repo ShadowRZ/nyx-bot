@@ -5,6 +5,8 @@ from nio import AsyncClient, MatrixRoom, RoomMessageImage, RoomMessageText, Stic
 from nyx_bot.chat_functions import send_quote_image, send_text_to_room, send_user_image
 from nyx_bot.config import Config
 from nyx_bot.errors import NyxBotValueError
+from nyx_bot.storage import MatrixMessage
+from nyx_bot.utils import parse_matrixdotto_link
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +52,10 @@ class Command:
             await self._send_avatar()
         elif self.command.startswith("send_as_sticker"):
             await self._send_as_sticker()
+        elif self.command.startswith("emit_statistics"):
+            await self._stat()
+        elif self.command.startswith("parse_matrixdotto"):
+            await self._parse_matrixdotto()
         elif self.command.startswith("help"):
             await self._show_help()
         else:
@@ -63,6 +69,52 @@ class Command:
             self.event,
             self.reply_to,
             self.replace_map,
+        )
+
+    async def _stat(self):
+        count = MatrixMessage.select().count()
+        room_count = (
+            MatrixMessage.select()
+            .where(MatrixMessage.room_id == self.room.room_id)
+            .count()
+        )
+        string = f"Total counted messages: {count}\nThis room: {room_count}"
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            string,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
+
+    async def _parse_matrixdotto(self):
+        if not self.args:
+            raise NyxBotValueError("No matrix.to links given.")
+        string = "Parse results:\n"
+        for i in self.args:
+            result = parse_matrixdotto_link(i)
+            if not result:
+                string += f"{i}: Invaild\n"
+            else:
+                type_ = result[0]
+                if type_ == "user":
+                    string += f"{i}: User, ID: {result[1]}\n"
+                elif type_ == "room":
+                    string += f"{i}: Room, ID: {result[1]}\n"
+                elif type_ == "room_named":
+                    string += f"{i}: Named Room, ID: {result[1]}\n"
+                elif type_ == "event":
+                    string += (
+                        f"{i}: Room Event, Room: {result[1]} Event ID: {result[2]}\n"
+                    )
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            string,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
         )
 
     async def _send_avatar(self):

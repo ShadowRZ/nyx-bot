@@ -80,10 +80,13 @@ class Config:
         if database_path.startswith(sqlite_scheme):
             self.database = {
                 "type": "sqlite",
-                "connection_string": database_path[len(sqlite_scheme) :],
+                "connection_string": f"sqlite:///{database_path[len(sqlite_scheme) :]}",
             }
         elif database_path.startswith(postgres_scheme):
-            self.database = {"type": "postgres", "connection_string": database_path}
+            self.database = {
+                "type": "postgres",
+                "connection_string": f"postgresql://{database_path[len(postgres_scheme):]}",
+            }
         else:
             raise ConfigError("Invalid connection string for storage.database")
 
@@ -105,7 +108,7 @@ class Config:
 
         self.command_prefix = self._get_cfg(["command_prefix"], default="!c") + " "
 
-        self.disable_jerryxiao_for = self._get_cfg(['disable_jerryxiao_for'], [])
+        self.disable_jerryxiao_for = self._get_cfg(["disable_jerryxiao_for"], [])
 
     def _get_cfg(
         self,
