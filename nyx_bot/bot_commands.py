@@ -1,6 +1,6 @@
 import logging
 from calendar import THURSDAY
-from datetime import date
+from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta
 from nio import AsyncClient, MatrixRoom, RoomMessageImage, RoomMessageText, StickerEvent
@@ -121,18 +121,23 @@ class Command:
 
     async def _crazy_thursday(self):
         today = date.today()
-        next_thursday = today + relativedelta(weekday=THURSDAY)
-        if today == next_thursday:
+        now = datetime.now()
+        next_thursday = today + relativedelta(
+            weekday=THURSDAY, hour=0, minute=0, second=0
+        )
+        next_thur_date = next_thursday.date()
+        if today == next_thur_date:
             string = "Crazy Thursday !!"
         else:
-            dt = next_thursday - today
+            dt = next_thursday - now
             string = (
-                f"Time until next thursday ({next_thursday.isoformat()}): {str(dt)}"
+                f"Time until next thursday ({next_thur_date.isoformat()}): {str(dt)}"
             )
         await send_text_to_room(
             self.client,
             self.room.room_id,
             string,
+            notice=False,
             markdown_convert=False,
             reply_to_event_id=self.event.event_id,
             literal_text=True,
