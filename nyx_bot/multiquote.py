@@ -23,10 +23,14 @@ async def make_multiquote_image(
         client, room, first_event, replace_map, True
     )
     images.append(first_quote_image)
-    for event_db_item in MatrixMessage.select().where(
-        (MatrixMessage.origin_server_ts >= event_ts)
-        & (MatrixMessage.room_id == room.room_id)
-    ).order_by(MatrixMessage.origin_server_ts):
+    for event_db_item in (
+        MatrixMessage.select()
+        .where(
+            (MatrixMessage.origin_server_ts >= event_ts)
+            & (MatrixMessage.room_id == room.room_id)
+        )
+        .order_by(MatrixMessage.origin_server_ts)
+    ):
         event_id = event_db_item.event_id
         if event_id == self_event.event_id:
             continue

@@ -19,15 +19,17 @@ def user_name(room: MatrixRoom, user_id: str) -> Optional[str]:
 
 
 async def get_body(
-    client: AsyncClient, room: MatrixRoom, event_id: str, replace_map: str
+    client: AsyncClient, room_id: str, event_id: str, replace_map: Optional[str] = None
 ) -> str:
+    if replace_map is None:
+        replace_map = {}
     if event_id not in replace_map:
-        target_response = await client.room_get_event(room.room_id, event_id)
+        target_response = await client.room_get_event(room_id, event_id)
         target_event = target_response.event
         return target_event.body
     else:
         new_evid = replace_map.get(event_id)
-        target_response = await client.room_get_event(room.room_id, new_evid)
+        target_response = await client.room_get_event(room_id, new_evid)
         target_event = target_response.event
         content = target_event.source.get("content")
         new_content = content.get("m.new_content")
@@ -139,7 +141,7 @@ async def make_single_quote_image(
         parser.feed(formatted_body)
         body = parser.into_pango_markup()
     else:
-        body = await get_body(client, room, target_event.event_id, replace_map)
+        body = await get_body(client, room.room_id, target_event.event_id, replace_map)
         if get_reply_to(target_event):
             body = strip_beginning_quote(body)
         if len(body) > 1000:

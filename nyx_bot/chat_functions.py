@@ -1,5 +1,7 @@
 import logging
+import re
 import traceback
+from html import escape
 from io import BytesIO
 from typing import Optional, Union
 from urllib.parse import urlparse
@@ -11,16 +13,19 @@ from nio import (
     ErrorResponse,
     MatrixRoom,
     RedactedEvent,
+    RoomMessageFormatted,
+    RoomMessageMedia,
     RoomMessageText,
     RoomSendResponse,
     SendRetryError,
+    StickerEvent,
     UploadResponse,
 )
 from wand.image import Image
 
 from nyx_bot.errors import NyxBotRuntimeError, NyxBotValueError
 from nyx_bot.multiquote import make_multiquote_image
-from nyx_bot.utils import make_single_quote_image
+from nyx_bot.utils import get_body, make_single_quote_image, strip_beginning_quote
 
 logger = logging.getLogger(__name__)
 
@@ -58,16 +63,64 @@ async def send_text_to_room(
     # Determine whether to ping room members or not
     msgtype = "m.notice" if notice else "m.text"
 
+    body = ""
+    formatted_body = ""
+
+    # Don't even try to make <mx-reply> if we're sending a notice
+    target_event = None
+    if (not notice) and reply_to_event_id:
+        target_resp = await client.room_get_event(room_id, reply_to_event_id)
+        target_event = target_resp.event
+        matrixdotto_url = f"https://matrix.to/#/{room_id}/{target_event.event_id}"
+        pill = make_pill(target_event.sender)
+        formatted_body += f'<mx-reply><blockquote><a href="{matrixdotto_url}">In reply to</a> {pill}<br/>'
+    # A text message
+    if isinstance(target_event, RoomMessageFormatted):
+        if target_event.formatted_body:
+            # Strip <mx-reply>
+            string = re.sub(r"<mx-reply>.*</mx-reply>", "", target_event.formatted_body)
+            formatted_body += string
+        else:
+            # Unlike Element, escape text body
+            formatted_body += escape(target_event.body)
+        formatted_body += "</blockquote></mx-reply>"
+        ref_body = strip_beginning_quote(
+            await get_body(client, room_id, target_event.event_id)
+        )
+        body += f"> <{target_event.sender}> "
+        body += ref_body.rstrip().replace("\n", "\n> ")
+        body += "\n\n"
+    # Sticker or media
+    elif isinstance(target_event, (RoomMessageMedia, StickerEvent)):
+        # Event body should just be intepreted as text, escape it
+        formatted_body += escape(target_event.body or "[Media]")
+        formatted_body += "</blockquote></mx-reply>"
+        ref_body = strip_beginning_quote(
+            await get_body(client, room_id, target_event.event_id)
+        )
+        body += f"> <{target_event.sender}> "
+        body += ref_body.rstrip().replace("\n", "\n> ")
+        body += "\n\n"
+
+    body += message
+
     content = {
         "msgtype": msgtype,
-        "body": message,
+        "body": body,
     }
 
-    if not literal_text:
-        content["format"] = "org.matrix.custom.html"
-
     if markdown_convert:
-        content["formatted_body"] = markdown(message)
+        formatted_body += markdown(message)
+    else:
+        # So HTML can be directly written
+        formatted_body += message
+
+    # Two cases for forcing HTML:
+    # 1. we're not sending literal text
+    # 2. it has a reply target
+    if (not literal_text) or reply_to_event_id:
+        content["format"] = "org.matrix.custom.html"
+        content["formatted_body"] = formatted_body
 
     if reply_to_event_id:
         content["m.relates_to"] = {"m.in_reply_to": {"event_id": reply_to_event_id}}
@@ -350,7 +403,7 @@ async def send_user_image(
             client,
             room.room_id,
             "This user has no avatar.",
-            True,
+            False,
             False,
             event.event_id,
             True,
@@ -390,9 +443,8 @@ async def send_exception(
     room_id: str,
     event_id: Optional[str] = None,
 ):
-    string = ""
     if isinstance(inst, NyxBotValueError):
-        string = f"Your input is invaild: {str(inst)}"
+        string = f"Your input is invalid: {str(inst)}"
     elif isinstance(inst, NyxBotRuntimeError):
         string = f"Your request couldn't be sastified: {str(inst)}"
     else:
@@ -405,6 +457,7 @@ async def send_exception(
         client,
         room_id,
         string,
+        notice=False,
         markdown_convert=False,
         reply_to_event_id=event_id,
         literal_text=True,

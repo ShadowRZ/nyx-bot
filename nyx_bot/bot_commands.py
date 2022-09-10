@@ -75,6 +75,8 @@ class Command:
 
     async def _quote(self):
         """Make a new quote image. This command must be used on a reply."""
+        if not self.reply_to:
+            raise NyxBotValueError("Please reply to a text message.")
         await self.client.room_typing(self.room.room_id)
         await send_quote_image(
             self.client,
@@ -86,6 +88,8 @@ class Command:
 
     async def _multiquote(self):
         """Make a new multiquote image. This command must be used on a reply."""
+        if not self.reply_to:
+            raise NyxBotValueError("Please reply to a text message.")
         limit = 3
         if self.args:
             try:
@@ -116,6 +120,7 @@ class Command:
             self.client,
             self.room.room_id,
             string,
+            notice=False,
             markdown_convert=False,
             reply_to_event_id=self.event.event_id,
             literal_text=True,
@@ -251,4 +256,5 @@ Available commands:
             self.client,
             self.room.room_id,
             f"Unknown command '{self.command}'. Try the 'help' command for more information.",
+            notice=False,
         )
