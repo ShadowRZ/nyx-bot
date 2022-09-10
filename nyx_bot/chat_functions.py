@@ -201,6 +201,7 @@ async def send_multiquote_image(
         await send_sticker_image(
             client, room.room_id, quote_image, "[Multiquote]", event.event_id
         )
+        await client.room_typing(room.room_id, False)
     else:
         raise NyxBotValueError(
             "You can't start a multiquote on an event that is not a normal text message."
@@ -226,6 +227,7 @@ async def send_quote_image(
         await send_sticker_image(
             client, room.room_id, quote_image, matrixdotto_url, event.event_id
         )
+        await client.room_typing(room.room_id, False)
     else:
         raise NyxBotValueError("Please reply to a normal text message.")
 

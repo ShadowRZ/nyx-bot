@@ -75,6 +75,7 @@ class Command:
 
     async def _quote(self):
         """Make a new quote image. This command must be used on a reply."""
+        await self.client.room_typing(self.room.room_id)
         await send_quote_image(
             self.client,
             self.room,
@@ -93,6 +94,7 @@ class Command:
                 raise NyxBotValueError("Please specify a integer.") from e
         if not (2 <= limit <= 6):
             raise NyxBotValueError("Please specify a integer in range [2, 6].")
+        await self.client.room_typing(self.room.room_id)
         await send_multiquote_image(
             self.client,
             self.room,
