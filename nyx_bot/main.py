@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 import logging
+import sys
 from asyncio.exceptions import TimeoutError
 from time import sleep
 
@@ -15,15 +16,33 @@ from nio import (
     UnknownEvent,
 )
 from nio.store.database import DefaultStore
+from playhouse.db_url import connect
 
 from nyx_bot.callbacks import Callbacks
-from nyx_bot.config import config
+from nyx_bot.config import Config
+from nyx_bot.storage import MatrixMessage
 
 logger = logging.getLogger(__name__)
 
 
 async def main():
     """The first function that is run when starting the bot"""
+
+    # Read user-configured options from a config file.
+    # A different config file path can be specified as the first command line argument
+    if len(sys.argv) > 1:
+        config_path = sys.argv[1]
+    else:
+        config_path = "config.yaml"
+
+    # Read the parsed config file and create a Config object
+    config = Config(config_path)
+
+    # Configure the database
+    db = connect(config.database["connection_string"])
+    db.connect()
+    MatrixMessage._meta.database = db
+    db.create_tables([MatrixMessage])
 
     # Configuration options for the AsyncClient
     client_config = AsyncClientConfig(

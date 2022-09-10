@@ -82,7 +82,7 @@ async def send_text_to_room(
             formatted_body += string
         else:
             # Unlike Element, escape text body
-            formatted_body += escape(target_event.body)
+            formatted_body += escape(target_event.body).replace("\n", "</br>")
         formatted_body += "</blockquote></mx-reply>"
         ref_body = strip_beginning_quote(
             await get_body(client, room_id, target_event.event_id)
@@ -91,9 +91,21 @@ async def send_text_to_room(
         body += ref_body.rstrip().replace("\n", "\n> ")
         body += "\n\n"
     # Sticker or media
-    elif isinstance(target_event, (RoomMessageMedia, StickerEvent)):
+    elif isinstance(target_event, RoomMessageMedia):
         # Event body should just be intepreted as text, escape it
-        formatted_body += escape(target_event.body or "[Media]")
+        formatted_body += escape(target_event.body or "[Media]").replace("\n", "</br>")
+        formatted_body += "</blockquote></mx-reply>"
+        ref_body = strip_beginning_quote(
+            await get_body(client, room_id, target_event.event_id)
+        )
+        body += f"> <{target_event.sender}> "
+        body += ref_body.rstrip().replace("\n", "\n> ")
+        body += "\n\n"
+    elif isinstance(target_event, StickerEvent):
+        # Event body should just be intepreted as text, escape it
+        formatted_body += escape(target_event.body or "[Sticker]").replace(
+            "\n", "</br>"
+        )
         formatted_body += "</blockquote></mx-reply>"
         ref_body = strip_beginning_quote(
             await get_body(client, room_id, target_event.event_id)
@@ -113,6 +125,8 @@ async def send_text_to_room(
         formatted_body += markdown(message)
     else:
         # So HTML can be directly written
+        if literal_text:
+            message = message.replace("\n", "<br/>")
         formatted_body += message
 
     # Two cases for forcing HTML:

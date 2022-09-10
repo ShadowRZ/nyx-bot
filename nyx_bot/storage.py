@@ -1,5 +1,3 @@
-import logging
-
 from peewee import (
     BooleanField,
     CharField,
@@ -8,21 +6,9 @@ from peewee import (
     IntegerField,
     Model,
 )
-from playhouse.db_url import connect
-
-from nyx_bot.config import config
-
-logger = logging.getLogger(__name__)
-
-db = connect(config.database["connection_string"])
 
 
-class BaseModel(Model):
-    class Meta:
-        database = db
-
-
-class MatrixMessage(BaseModel):
+class MatrixMessage(Model):
     room_id = CharField()
     event_id = CharField()
     origin_server_ts = IntegerField()
@@ -33,6 +19,5 @@ class MatrixMessage(BaseModel):
     date = DateField()
     datetime = DateTimeField()
 
-
-db.connect()
-db.create_tables([MatrixMessage])
+    class Meta:
+        database = None

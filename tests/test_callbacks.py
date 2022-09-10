@@ -4,7 +4,6 @@ from unittest.mock import Mock
 import nio
 
 from nyx_bot.callbacks import Callbacks
-from nyx_bot.storage import Storage
 
 from tests.utils import make_awaitable, run_coroutine
 
@@ -15,14 +14,10 @@ class CallbacksTestCase(unittest.TestCase):
         self.fake_client = Mock(spec=nio.AsyncClient)
         self.fake_client.user = "@fake_user:example.com"
 
-        self.fake_storage = Mock(spec=Storage)
-
         # We don't spec config, as it doesn't currently have well defined attributes
         self.fake_config = Mock()
 
-        self.callbacks = Callbacks(
-            self.fake_client, self.fake_storage, self.fake_config
-        )
+        self.callbacks = Callbacks(self.fake_client, self.fake_config)
 
     def test_invite(self):
         """Tests the callback for InviteMemberEvents"""
