@@ -323,19 +323,12 @@ async def send_user_image(
     event: RoomMessageText,
     reply_to: str,
 ):
-    """Send a user's avatar to a room.
-
-    Arguments:
-    ---------
-    client : Client
-    room_id : str
-    image : Image
-
-    """
+    """Send a user's avatar to a room."""
     if not reply_to:
-        raise NyxBotValueError("This command requires replying to a message.")
-    target_response = await client.room_get_event(room.room_id, reply_to)
-    target_event = target_response.event
+        target_event = event
+    else:
+        target_response = await client.room_get_event(room.room_id, reply_to)
+        target_event = target_response.event
     sender = target_event.sender
     sender_name = room.user_name(sender)
     sender_avatar = room.avatar_url(sender)

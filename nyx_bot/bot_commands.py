@@ -175,7 +175,12 @@ class Command:
         )
 
     async def _send_avatar(self):
-        """Send the avatar of the person being replied to. This command must be used on a reply."""
+        """\
+Send an avatar.
+
+When used in a reply, send the avatar of the person being replied to.
+Outside of a reply, send the avatar of the command sender.\
+"""
         await send_user_image(self.client, self.room, self.event, self.reply_to)
 
     async def _send_as_sticker(self):
@@ -233,7 +238,7 @@ class Command:
 Available commands:
 
 * `quote`: Make a new quote image. This command must be used on a reply.
-* `send_avatar`: Send the avatar of the person being replied to. This command must be used on a reply.
+* `send_avatar`: Send an avatar. When used in a reply, send the avatar of the person being replied to. Outside of a reply, send the avatar of the command sender.
 * `send_as_sticker`: Turn an image into a sticker. This command must be used on a reply.
 * `multiquote [count]`: (count is in [2, 6]) Make a new multiquote image. This command must be used on a reply.
 """
