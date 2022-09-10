@@ -30,6 +30,8 @@ async def make_multiquote_image(
         event_id = event_db_item.event_id
         if event_id == self_event.event_id:
             continue
+        if event_db_item.is_replacement:
+            continue
         next_response = await client.room_get_event(room.room_id, event_id)
         next_event = next_response.event
         if isinstance(next_event, RoomMessageText):
