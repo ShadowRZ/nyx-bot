@@ -43,38 +43,16 @@ class Callbacks:
             event: The event defining the message.
         """
         event_replace = get_replaces(event)
-        message_db_item = MatrixMessage.get_or_none(
-            (MatrixMessage.room_id == room.room_id)
-            & (MatrixMessage.event_id == event.event_id)
-        )
-        if not message_db_item:
-            message_db_item = MatrixMessage()
-        message_db_item.room_id = room.room_id
-        message_db_item.event_id = event.event_id
-        message_db_item.origin_server_ts = event.server_timestamp
-        message_db_item.external_url = get_external_url(event)
-        message_db_item.sender = event.sender
-        ts_obj = make_datetime(event.server_timestamp)
-        message_db_item.datetime = ts_obj
-        message_db_item.date = ts_obj.date()
-        if event_replace:
-            message_db_item.is_replacement = True
-        message_db_item.save()
+        timestamp = make_datetime(event.server_timestamp)
+        external_url = get_external_url(event)
+        MatrixMessage.update_message(room, event, external_url, timestamp, event_replace)
         # Ignore too old messages
         current_time = int(time.time() * 1000)
         if current_time - event.server_timestamp > 60000:
             return
 
-        # Check if we should replace things.
         if event_replace:
             self.replace_map[event_replace] = event.event_id
-            replace_item = MatrixMessage.get_or_none(
-                (MatrixMessage.room_id == room.room_id)
-                & (MatrixMessage.event_id == event_replace)
-            )
-            if replace_item:
-                replace_item.replaced_by = event.event_id
-                replace_item.save()
 
         # Extract the message text
         msg = event.body
@@ -138,6 +116,8 @@ class Callbacks:
             try:
                 await command.process()
             except Exception as inst:
+                # Clear any previous typing event
+                await self.client.room_typing(room.room_id, False)
                 await send_exception(self.client, inst, room.room_id, event.event_id)
 
     async def unknown(self, room: MatrixRoom, event: UnknownEvent) -> None:

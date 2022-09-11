@@ -265,4 +265,7 @@ Available commands:
             self.room.room_id,
             f"Unknown command '{self.command}'. Try the 'help' command for more information.",
             notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
         )
