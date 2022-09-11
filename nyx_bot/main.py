@@ -21,7 +21,7 @@ from playhouse.db_url import connect
 
 from nyx_bot.callbacks import Callbacks
 from nyx_bot.config import Config
-from nyx_bot.storage import MatrixMessage, pkginfo_database
+from nyx_bot.storage import ArchPackage, MatrixMessage, pkginfo_database
 
 logger = logging.getLogger(__name__)
 
@@ -45,13 +45,9 @@ async def main():
     MatrixMessage._meta.database = db
     db.create_tables([MatrixMessage])
 
-    archcn_db = os.path.join(config.store_path, "archcn_pkginfo.db")
-    if not os.path.isfile(archcn_db):
-        logger.warning(
-            "Arch CN Pkginfo DB Not found, dependent features won't work properly."
-        )
-    else:
-        pkginfo_database.init(archcn_db)
+    pacman_db = os.path.join(config.store_path, "pacman_pkginfo.db")
+    pkginfo_database.init(pacman_db)
+    pkginfo_database.create_tables([ArchPackage])
 
     # Configuration options for the AsyncClient
     client_config = AsyncClientConfig(

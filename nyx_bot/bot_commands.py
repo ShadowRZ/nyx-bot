@@ -5,7 +5,7 @@ from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from nio import AsyncClient, MatrixRoom, RoomMessageImage, RoomMessageText, StickerEvent
 
-from nyx_bot.archcn_utils import send_archlinuxcn_pkg
+from nyx_bot.archcn_utils import send_archlinuxcn_pkg, update_archlinuxcn_pkg
 from nyx_bot.chat_functions import (
     send_multiquote_image,
     send_quote_image,
@@ -59,6 +59,8 @@ class Command:
             await self._quote()
         elif self.command.startswith("archlinuxcn"):
             await self._archlinuxcn()
+        elif self.command.startswith("update_archlinuxcn"):
+            await self._update_archlinuxcn()
         elif self.command.startswith("multiquote"):
             await self._multiquote()
         elif self.command.startswith("send_avatar"):
@@ -93,6 +95,10 @@ class Command:
         if not self.args:
             raise NyxBotValueError("No package given.")
         await send_archlinuxcn_pkg(self.client, self.room, self.event, self.args[0])
+
+    async def _update_archlinuxcn(self):
+        await self.client.room_typing(self.room.room_id)
+        await update_archlinuxcn_pkg(self.client, self.room, self.event)
 
     async def _multiquote(self):
         """Make a new multiquote image. This command must be used on a reply."""

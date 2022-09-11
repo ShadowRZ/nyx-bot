@@ -45,7 +45,9 @@ class Callbacks:
         event_replace = get_replaces(event)
         timestamp = make_datetime(event.server_timestamp)
         external_url = get_external_url(event)
-        MatrixMessage.update_message(room, event, external_url, timestamp, event_replace)
+        MatrixMessage.update_message(
+            room, event, external_url, timestamp, event_replace
+        )
         # Ignore too old messages
         current_time = int(time.time() * 1000)
         if current_time - event.server_timestamp > 60000:
