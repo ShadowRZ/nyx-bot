@@ -49,13 +49,14 @@ RUN apk add --no-cache \
     musl-dev \
     libpq \
     postgresql-dev \
-    libstdc++
+    libstdc++ \
+    imagemagick
 
 # Install python runtime modules. We do this before copying the source code
 # such that these dependencies can be cached
 RUN mkdir -p /src/nyx_bot
 COPY nyx_bot/__init__.py /src/nyx_bot/
-COPY README.md my-project-name /src/
+COPY README.md nyx-bot /src/
 COPY setup.py /src/setup.py
 RUN pip install -e "/src/.[postgres]"
 
@@ -68,4 +69,4 @@ COPY *.py /src/
 VOLUME ["/data"]
 
 # Start the app
-ENTRYPOINT ["my-project-name", "/data/config.yaml"]
+ENTRYPOINT ["nyx-bot", "/data/config.yaml"]

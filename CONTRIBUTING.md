@@ -54,6 +54,20 @@ Install python dependencies:
 pip install -e .
 ```
 
+This projects uses [Wand](https://docs.wand-py.org) and requires you to install ImageMagick library.
+
+Debian/Ubuntu:
+
+```
+sudo apt install libmagickwand-dev
+```
+
+Arch:
+
+```
+sudo pacman -S imagemagick
+```
+
 (Optional) If you want to use postgres as a database backend, use the following
 command to install postgres dependencies alongside those that are necessary:
 

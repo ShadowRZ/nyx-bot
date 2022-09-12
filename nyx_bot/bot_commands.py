@@ -254,12 +254,21 @@ Outside of a reply, send the avatar of the command sender.\
         topic = self.args[0]
         if topic == "commands":
             text = """\
-Available commands:
+Only avaliable on a reply:
 
-* `quote`: Make a new quote image. This command must be used on a reply.
-* `send_avatar`: Send an avatar. When used in a reply, send the avatar of the person being replied to. Outside of a reply, send the avatar of the command sender.
-* `send_as_sticker`: Turn an image into a sticker. This command must be used on a reply.
-* `multiquote [count]`: (count is in [2, 6]) Make a new multiquote image. This command must be used on a reply.
+* `quote`: Make a new quote image.
+* `send_as_sticker`: Turn an image into a sticker.
+* `multiquote [count]`: (count is in [2, 6]) Make a new multiquote image.
+
+Usable anywhere:
+
+* `archlinuxcn [package]`: Query a package in [archlinuxcn].
+* `emit_statistics`: Show statistics.
+* `crazy_thursday`: On Thrusday, print "Crazy Thursday !!". Otherwise print remaining time to next Thursday.
+
+Others:
+
+* `send_avatar`: In a reply, send the avatar of the person being replied to. Outside of a reply, send the avatar of the command sender.
 """
         else:
             text = "Unknown help topic!"

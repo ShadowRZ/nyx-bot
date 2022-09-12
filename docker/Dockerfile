@@ -60,7 +60,7 @@ RUN apk add --no-cache \
 # This speeds up subsequent image builds when the source code is changed
 RUN mkdir -p /src/nyx_bot
 COPY nyx_bot/__init__.py /src/nyx_bot/
-COPY README.md my-project-name /src/
+COPY README.md nyx-bot /src/
 
 # Build the dependencies
 COPY setup.py /src/setup.py
@@ -91,11 +91,12 @@ COPY --from=builder /usr/local/lib/libolm* /usr/local/lib/
 RUN apk add --no-cache \
     libstdc++ \
     libpq \
-    postgresql-dev
+    postgresql-dev \
+    imagemagick
 
 # Specify a volume that holds the config file, SQLite3 database,
 # and the matrix-nio store
 VOLUME ["/data"]
 
 # Start the bot
-ENTRYPOINT ["my-project-name", "/data/config.yaml"]
+ENTRYPOINT ["nyx-bot", "/data/config.yaml"]
