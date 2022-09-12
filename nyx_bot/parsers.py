@@ -37,6 +37,8 @@ class MatrixHTMLParser(HTMLParser):
                     self.buffer += "<b>"
                 elif tag in ("s", "del"):
                     self.buffer += "<s>"
+                elif tag == "u":
+                    self.buffer += "<u>"
                 elif tag == "blockquote":
                     if not self.buffer.endswith("\n"):
                         self.buffer += "\n"
@@ -65,6 +67,8 @@ class MatrixHTMLParser(HTMLParser):
                     self.buffer += "</b>"
                 elif tag in ("s", "del"):
                     self.buffer += "</s>"
+                elif tag == "u":
+                    self.buffer += "</u>"
             if tag == "mx-reply" and self.strip_reply:
                 self.is_in_reply = False
 
