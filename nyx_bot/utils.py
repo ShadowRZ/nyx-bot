@@ -8,6 +8,7 @@ from wand.image import Image
 
 from nyx_bot.parsers import MatrixHTMLParser
 from nyx_bot.quote_image import make_quote_image
+from nyx_bot.storage import UserTag
 
 
 def user_name(room: MatrixRoom, user_id: str) -> Optional[str]:
@@ -163,5 +164,11 @@ async def make_single_quote_image(
             image = Image(width=64, height=64, background="#FFFF00")
     else:
         sender_name = None
-    quote_image = await make_quote_image(sender_name, body, image, formatted)
+    user_tag = UserTag.get_or_none(
+        (UserTag.room_id == room.room_id) & (UserTag.sender == sender)
+    )
+    tag_name = None
+    if user_tag:
+        tag_name = f"#{user_tag.tag}"
+    quote_image = await make_quote_image(sender_name, body, image, formatted, tag_name)
     return quote_image

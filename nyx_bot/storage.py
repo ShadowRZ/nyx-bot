@@ -28,9 +28,6 @@ class MatrixMessage(Model):
     date = DateField()
     datetime = DateTimeField()
 
-    class Meta:
-        database = None
-
     @staticmethod
     def update_message(
         room: MatrixRoom,
@@ -62,6 +59,28 @@ class MatrixMessage(Model):
                 replace_item.replaced_by = event.event_id
                 replace_item.save()
         message_db_item.save()
+
+
+class UserTag(Model):
+    room_id = CharField()
+    sender = CharField()
+    tag = CharField()
+
+    @staticmethod
+    def update_user_tag(room_id: str, sender: str, tag: str):
+        user_tag = UserTag.get_or_none(
+            (UserTag.room_id == room_id) & (UserTag.sender == sender)
+        )
+        if not user_tag:
+            user_tag = UserTag(room_id=room_id, sender=sender)
+        user_tag.tag = tag
+        user_tag.save()
+
+    @staticmethod
+    def delete_user_tag(room_id: str, sender: str):
+        UserTag.delete().whete(
+            (UserTag.room_id == room_id) & (UserTag.sender == sender)
+        ).execute()
 
 
 pkginfo_database = SqliteDatabase(None)

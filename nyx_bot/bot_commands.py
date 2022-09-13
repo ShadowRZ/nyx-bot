@@ -14,7 +14,7 @@ from nyx_bot.chat_functions import (
 )
 from nyx_bot.config import Config
 from nyx_bot.errors import NyxBotValueError
-from nyx_bot.storage import MatrixMessage
+from nyx_bot.storage import MatrixMessage, UserTag
 from nyx_bot.utils import parse_matrixdotto_link
 
 logger = logging.getLogger(__name__)
@@ -75,6 +75,10 @@ class Command:
             await self._parse_matrixdotto()
         elif self.command.startswith("help"):
             await self._show_help()
+        elif self.command.startswith("tag"):
+            await self._tag()
+        elif self.command.startswith("remove_tag"):
+            await self._remove_tag()
         else:
             await self._unknown_command()
 
@@ -284,3 +288,56 @@ Others:
             reply_to_event_id=self.event.event_id,
             literal_text=True,
         )
+
+    async def _tag(self):
+        if not self.reply_to:
+            raise NyxBotValueError("Please reply to a message.")
+        target_event = await self.client.room_get_event(
+            self.room.room_id, self.reply_to
+        )
+        sender = target_event.event.sender
+        if not self.args:
+            user_tag = UserTag.get_or_none(
+                (UserTag.room_id == self.room.room_id) & (UserTag.sender == sender)
+            )
+            if user_tag:
+                tag_name = f"#{user_tag.tag}"
+            else:
+                tag_name = "(None)"
+            await send_text_to_room(
+                self.client,
+                self.room.room_id,
+                f"Tag for {sender}: {tag_name}",
+                notice=False,
+                markdown_convert=False,
+                reply_to_event_id=self.event.event_id,
+                literal_text=True,
+            )
+        else:
+            new_tag = self.args[0]
+            if new_tag.startswith("#"):
+                tag_name = new_tag[1:]
+                if tag_name == "":
+                    raise NyxBotValueError("Tag is empty.")
+                else:
+                    UserTag.update_user_tag(self.room.room_id, sender, tag_name)
+                    await send_text_to_room(
+                        self.client,
+                        self.room.room_id,
+                        "Done.",
+                        notice=False,
+                        markdown_convert=False,
+                        reply_to_event_id=self.event.event_id,
+                        literal_text=True,
+                    )
+            else:
+                raise NyxBotValueError("Tag is invaild: Tag should start with #.")
+
+    async def _remove_tag(self):
+        if not self.reply_to:
+            raise NyxBotValueError("Please reply to a message.")
+        target_event = await self.client.room_get_event(
+            self.room.room_id, self.reply_to
+        )
+        sender = target_event.event.sender
+        UserTag.delete_user_tag(self.room.room_id, sender)

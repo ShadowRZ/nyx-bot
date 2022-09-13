@@ -21,7 +21,7 @@ from playhouse.db_url import connect
 
 from nyx_bot.callbacks import Callbacks
 from nyx_bot.config import Config
-from nyx_bot.storage import ArchPackage, MatrixMessage, pkginfo_database
+from nyx_bot.storage import ArchPackage, MatrixMessage, UserTag, pkginfo_database
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +42,8 @@ async def main():
     # Configure the database
     db = connect(config.database["connection_string"])
     db.connect()
-    MatrixMessage._meta.database = db
-    db.create_tables([MatrixMessage])
+    db.bind([MatrixMessage, UserTag])
+    db.create_tables([MatrixMessage, UserTag])
 
     pacman_db = os.path.join(config.store_path, "pacman_pkginfo.db")
     pkginfo_database.init(pacman_db)

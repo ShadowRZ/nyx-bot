@@ -23,12 +23,19 @@ MASK_FILE = os.path.join(nyx_bot.__path__[0], "mask.png")
 
 
 async def make_quote_image(
-    sender: Optional[str], text: str, avatar: Optional[Image], formatted: bool
+    sender: Optional[str],
+    text: str,
+    avatar: Optional[Image],
+    formatted: bool,
+    tag: Optional[str] = None,
 ) -> Image:
     draw = Drawing()
     draw_text = ""
     if sender:
-        draw_text += f"""<span size="larger" foreground="#1f4788" weight="bold">{sender}</span>\n"""
+        draw_text += f"""<span size="larger" foreground="#1f4788" weight="bold">{escape(sender)}</span>"""
+    if tag:
+        draw_text += f"""<span size="larger" foreground="#FF0000" weight="bold"> {escape(tag)}</span>"""
+    draw_text += "\n"
     if formatted:
         # If formatted, this message should be already formatted.
         draw_text += text
