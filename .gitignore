@@ -24,3 +24,6 @@ config.yaml
 
 # Log files
 *.log
+
+# Auth token
+credentials.json
