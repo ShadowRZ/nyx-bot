@@ -2,7 +2,6 @@ from nio import AsyncClient, MatrixRoom, RoomMessageText
 from wand.drawing import Drawing
 from wand.image import Image
 
-from nyx_bot.storage import MatrixMessage
 from nyx_bot.utils import make_single_quote_image
 
 
@@ -14,44 +13,19 @@ async def make_multiquote_image(
     replace_map: dict,
     self_event: RoomMessageText,
 ) -> Image:
-    # First find all events
-    event_ts = first_event.server_timestamp
     images = []
-    i = 1
-    sender = first_event.sender
-    first_quote_image = await make_single_quote_image(
-        client, room, first_event, replace_map, True
-    )
-    images.append(first_quote_image)
-    for event_db_item in (
-        MatrixMessage.select()
-        .where(
-            (MatrixMessage.origin_server_ts >= event_ts)
-            & (MatrixMessage.room_id == room.room_id)
-        )
-        .order_by(MatrixMessage.origin_server_ts)
-    ):
-        event_id = event_db_item.event_id
-        if event_id == self_event.event_id:
-            continue
-        if event_db_item.is_replacement:
-            continue
-        if event_id == first_event.event_id:
-            continue
-        next_response = await client.room_get_event(room.room_id, event_id)
-        next_event = next_response.event
+    show_user = True
+    sender = None
+    for next_event in await fetch_events(client, room, first_event, limit, self_event):
+        show_user = sender != next_event.sender
+        sender = next_event.sender
         if isinstance(next_event, RoomMessageText):
-            show_user = sender != next_event.sender
             next_quote_image = await make_single_quote_image(
                 client, room, next_event, replace_map, show_user
             )
             images.append(next_quote_image)
-            sender = next_event.sender
-            i += 1
-        if i >= limit:
-            break
 
-    # Next make the final quote image
+    # Make the final quote image
     final_width = max(img.width for img in images)
     final_height = sum(img.height for img in images)
 
@@ -63,3 +37,33 @@ async def make_multiquote_image(
             render_y += img.height + 1
         draw(ret)
     return ret
+
+
+async def fetch_events(
+    client: AsyncClient,
+    room: MatrixRoom,
+    first_event: RoomMessageText,
+    limit: int,
+    self_event: RoomMessageText,
+):
+    events = []
+    event_marker = first_event
+    events.append(first_event)
+    while len(events) < limit:
+        context_resp = await client.room_context(room.room_id, event_marker.event_id)
+        collected_events = context_resp.events_after
+        for event in collected_events:
+            event_id = event.event_id
+            # Ignore control message
+            if event_id == self_event.event_id:
+                continue
+            # Only take actual text events
+            if isinstance(event, RoomMessageText):
+                events.append(event)
+            # Update event marker
+            event_marker = event
+
+    # Sort events
+    events.sort(key=lambda ev: ev.server_timestamp)
+    # Return them
+    return events[:limit]
