@@ -7,6 +7,7 @@ from nio import AsyncClient, MatrixRoom, RoomMessageImage, RoomMessageText, Stic
 
 from nyx_bot.archcn_utils import send_archlinuxcn_pkg, update_archlinuxcn_pkg
 from nyx_bot.chat_functions import (
+    bulk_update_messages,
     send_multiquote_image,
     send_quote_image,
     send_text_to_room,
@@ -79,6 +80,8 @@ class Command:
             await self._tag()
         elif self.command.startswith("remove_tag"):
             await self._remove_tag()
+        elif self.command.startswith("update"):
+            await self._update()
         else:
             await self._unknown_command()
 
@@ -103,6 +106,24 @@ class Command:
     async def _update_archlinuxcn(self):
         await self.client.room_typing(self.room.room_id)
         await update_archlinuxcn_pkg(self.client, self.room, self.event)
+
+    async def _update(self):
+        await self.client.room_typing(self.room.room_id)
+        context_resp = await self.client.room_context(
+            self.room.room_id, self.event.event_id
+        )
+        start_token = context_resp.start
+        await bulk_update_messages(self.client, self.room, start_token)
+        await self.client.room_typing(self.room.room_id, False)
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            "Done.",
+            notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
 
     async def _multiquote(self):
         """Make a new multiquote image. This command must be used on a reply."""

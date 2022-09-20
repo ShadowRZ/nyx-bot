@@ -25,7 +25,15 @@ from wand.image import Image
 
 from nyx_bot.errors import NyxBotRuntimeError, NyxBotValueError
 from nyx_bot.multiquote import make_multiquote_image
-from nyx_bot.utils import get_body, make_single_quote_image, strip_beginning_quote
+from nyx_bot.storage import MatrixMessage
+from nyx_bot.utils import (
+    get_body,
+    get_external_url,
+    get_replaces,
+    make_datetime,
+    make_single_quote_image,
+    strip_beginning_quote,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -476,3 +484,27 @@ async def send_exception(
         reply_to_event_id=event_id,
         literal_text=True,
     )
+
+
+async def bulk_update_messages(
+    client: AsyncClient,
+    room: MatrixRoom,
+    start: str,
+    limit: int = 500,
+):
+    count = 0
+    sync_token = start
+    while count <= limit:
+        messages_resp = await client.room_messages(room.room_id, sync_token, limit=50)
+        messages = messages_resp.chunk
+        sorted_messages = sorted(messages, key=lambda ev: ev.server_timestamp)
+        for event in sorted_messages:
+            if isinstance(event, RoomMessageText):
+                event_replace = get_replaces(event)
+                timestamp = make_datetime(event.server_timestamp)
+                external_url = get_external_url(event)
+                MatrixMessage.update_message(
+                    room, event, external_url, timestamp, event_replace
+                )
+                count += 1
+        sync_token = messages_resp.end

@@ -78,7 +78,7 @@ class UserTag(Model):
 
     @staticmethod
     def delete_user_tag(room_id: str, sender: str):
-        UserTag.delete().whete(
+        UserTag.delete().where(
             (UserTag.room_id == room_id) & (UserTag.sender == sender)
         ).execute()
 
