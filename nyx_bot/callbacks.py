@@ -7,6 +7,7 @@ from nio import (
     InviteMemberEvent,
     JoinError,
     MatrixRoom,
+    RoomMemberEvent,
     RoomMessageText,
     UnknownEvent,
 )
@@ -14,7 +15,7 @@ from nio import (
 from nyx_bot.bot_commands import Command
 from nyx_bot.chat_functions import send_exception, send_jerryxiao
 from nyx_bot.config import Config
-from nyx_bot.storage import MatrixMessage
+from nyx_bot.storage import MatrixMessage, MembershipUpdates
 from nyx_bot.utils import get_external_url, get_replaces, get_reply_to, make_datetime
 
 logger = logging.getLogger(__name__)
@@ -183,3 +184,8 @@ class Callbacks:
         if event.state_key == self.client.user_id:
             # This is our own membership (invite) event
             await self.invite(room, event)
+
+    async def membership(self, room: MatrixRoom, event: RoomMemberEvent) -> None:
+        timestamp = make_datetime(event.server_timestamp)
+        MembershipUpdates.update_membership(room, event, timestamp)
+        pass

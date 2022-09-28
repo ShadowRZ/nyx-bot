@@ -3,7 +3,7 @@ from datetime import datetime
 from io import BytesIO
 from typing import Optional
 
-from nio import MatrixRoom, RoomMessageText
+from nio import MatrixRoom, RoomMemberEvent, RoomMessageText
 from peewee import (
     BooleanField,
     CharField,
@@ -59,6 +59,51 @@ class MatrixMessage(Model):
                 replace_item.replaced_by = event.event_id
                 replace_item.save()
         message_db_item.save()
+
+
+class MembershipUpdates(Model):
+    room_id = CharField()
+    event_id = CharField()
+    origin_server_ts = IntegerField()
+    sender = CharField()
+    state_key = CharField()
+    avatar_url = CharField(null=True)
+    prev_avatar_url = CharField(null=True)
+    name = CharField(null=True)
+    prev_name = CharField(null=True)
+    date = DateField()
+    datetime = DateTimeField()
+
+    @staticmethod
+    def update_membership(
+        room: MatrixRoom,
+        event: RoomMemberEvent,
+        timestamp: datetime,
+    ):
+        content = event.content or {}
+        prev_content = event.prev_content or {}
+        avatar_url = content.get("avatar_url")
+        prev_avatar_url = prev_content.get("avatar_url")
+        name = content.get("displayname")
+        prev_name = prev_content.get("displayname")
+        db_item = MembershipUpdates.get_or_none(
+            (MembershipUpdates.room_id == room.room_id)
+            & (MembershipUpdates.event_id == event.event_id)
+        )
+        if not db_item:
+            db_item = MembershipUpdates()
+        db_item.room_id = room.room_id
+        db_item.event_id = event.event_id
+        db_item.origin_server_ts = event.server_timestamp
+        db_item.sender = event.sender
+        db_item.state_key = event.state_key
+        db_item.datetime = timestamp
+        db_item.date = timestamp.date()
+        db_item.avatar_url = avatar_url
+        db_item.prev_avatar_url = prev_avatar_url
+        db_item.name = name
+        db_item.prev_name = prev_name
+        db_item.save()
 
 
 class UserTag(Model):

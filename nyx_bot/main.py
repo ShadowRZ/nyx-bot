@@ -13,6 +13,7 @@ from nio import (
     InviteMemberEvent,
     LocalProtocolError,
     LoginError,
+    RoomMemberEvent,
     RoomMessageText,
     UnknownEvent,
 )
@@ -21,7 +22,13 @@ from playhouse.db_url import connect
 
 from nyx_bot.callbacks import Callbacks
 from nyx_bot.config import Config
-from nyx_bot.storage import ArchPackage, MatrixMessage, UserTag, pkginfo_database
+from nyx_bot.storage import (
+    ArchPackage,
+    MatrixMessage,
+    MembershipUpdates,
+    UserTag,
+    pkginfo_database,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +49,8 @@ async def main():
     # Configure the database
     db = connect(config.database["connection_string"])
     db.connect()
-    db.bind([MatrixMessage, UserTag])
-    db.create_tables([MatrixMessage, UserTag])
+    db.bind([MatrixMessage, UserTag, MembershipUpdates])
+    db.create_tables([MatrixMessage, UserTag, MembershipUpdates])
 
     pacman_db = os.path.join(config.store_path, "pacman_pkginfo.db")
     pkginfo_database.init(pacman_db)
@@ -78,6 +85,7 @@ async def main():
     client.add_event_callback(
         callbacks.invite_event_filtered_callback, (InviteMemberEvent,)
     )
+    client.add_event_callback(callbacks.membership, (RoomMemberEvent,))
 
     # Keep trying to reconnect on failure (with some time in-between)
     while True:
