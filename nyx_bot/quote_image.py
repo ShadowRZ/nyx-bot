@@ -32,9 +32,13 @@ async def make_quote_image(
     draw = Drawing()
     draw_text = ""
     if sender:
-        draw_text += f"""<span size="larger" foreground="#1f4788">{escape(sender)}</span>"""
+        draw_text += (
+            f"""<span size="larger" foreground="#1f4788">{escape(sender)}</span>"""
+        )
         if tag:
-            draw_text += f"""<span size="larger" foreground="#8D94A5"> {escape(tag)}</span>"""
+            draw_text += (
+                f"""<span size="larger" foreground="#8D94A5"> {escape(tag)}</span>"""
+            )
     draw_text += "\n"
     if formatted:
         # If formatted, this message should be already formatted.
