@@ -134,14 +134,16 @@ class Command:
             if avatar_url != prev_avatar_url:
                 i -= 1
                 avatar_http = await self.client.mxc_to_http(avatar_url)
-                send_text += f"{i}: Changed to {avatar_http} ({change.datetime.isoformat()})\n"
+                send_text += (
+                    f"{i}: Changed to {avatar_http} ({change.datetime.isoformat()})\n"
+                )
             if i < -3:
                 break
         await self.client.room_typing(self.room.room_id, False)
         await send_text_to_room(
             self.client,
             self.room.room_id,
-            send_text,
+            send_text.rstrip(),
             notice=False,
             markdown_convert=False,
             reply_to_event_id=self.event.event_id,

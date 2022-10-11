@@ -243,6 +243,8 @@ async def send_jerryxiao(
     target_event = await client.room_get_event(room.room_id, reply_to)
     to_sender = target_event.event.sender
     action = reference_text[len(prefix) :]
+    if action.isascii():
+        return
     if action != "":
         if reversed_senders:
             # Swap from and to
