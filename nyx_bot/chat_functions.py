@@ -20,6 +20,7 @@ from nio import (
     SendRetryError,
     StickerEvent,
     UploadResponse,
+    RoomGetEventError,
 )
 from wand.image import Image
 
@@ -293,6 +294,9 @@ async def send_quote_image(
     replace_map: dict,
 ):
     target_response = await client.room_get_event(room.room_id, reply_to)
+    if isinstance(target_response, RoomGetEventError):
+        error = target_response.message
+        raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
     target_event = target_response.event
     if isinstance(target_event, RedactedEvent):
         raise NyxBotRuntimeError("Event has been redacted.")
