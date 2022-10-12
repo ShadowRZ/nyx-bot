@@ -173,10 +173,7 @@ async def make_single_quote_image(
     image = None
     if show_user:
         if sender_avatar:
-            url = urlparse(sender_avatar)
-            server_name = url.netloc
-            media_id = url.path.replace("/", "")
-            avatar_resp = await client.download(server_name, media_id)
+            avatar_resp = await client.download(mxc=sender_avatar)
             if isinstance(avatar_resp, DownloadError):
                 error = avatar_resp.message
                 raise NyxBotRuntimeError(f"Failed to download {sender_avatar}: {error}")
