@@ -31,9 +31,7 @@ def write_details_to_disk(resp: LoginResponse, homeserver) -> None:
 
 async def main() -> None:
     if not os.path.exists("credentials.json"):
-        print(
-            "Auth token will be filled into file credentials.json."
-        )
+        print("Auth token will be filled into file credentials.json.")
         homeserver = "https://matrix.example.org"
         homeserver = input(f"Enter your homeserver URL: [{homeserver}] ")
 
