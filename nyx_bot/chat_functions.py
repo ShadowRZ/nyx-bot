@@ -13,6 +13,7 @@ from nio import (
     ErrorResponse,
     MatrixRoom,
     RedactedEvent,
+    RoomGetEventError,
     RoomMessageFormatted,
     RoomMessageMedia,
     RoomMessageText,
@@ -20,7 +21,6 @@ from nio import (
     SendRetryError,
     StickerEvent,
     UploadResponse,
-    RoomGetEventError,
 )
 from wand.image import Image
 
@@ -79,10 +79,14 @@ async def send_text_to_room(
     target_event = None
     if (not notice) and reply_to_event_id:
         target_resp = await client.room_get_event(room_id, reply_to_event_id)
-        target_event = target_resp.event
-        matrixdotto_url = f"https://matrix.to/#/{room_id}/{target_event.event_id}"
-        pill = make_pill(target_event.sender)
-        formatted_body += f'<mx-reply><blockquote><a href="{matrixdotto_url}">In reply to</a> {pill}<br/>'
+        if isinstance(target_resp, RoomGetEventError):
+            error = target_resp.message
+            logger.error(f"Failed to fetch event: {error}")
+        else:
+            target_event = target_resp.event
+            matrixdotto_url = f"https://matrix.to/#/{room_id}/{target_event.event_id}"
+            pill = make_pill(target_event.sender)
+            formatted_body += f'<mx-reply><blockquote><a href="{matrixdotto_url}">In reply to</a> {pill}<br/>'
     # A text message
     if isinstance(target_event, RoomMessageFormatted):
         if target_event.formatted_body:
@@ -242,6 +246,10 @@ async def send_jerryxiao(
 ):
     from_sender = event.sender
     target_event = await client.room_get_event(room.room_id, reply_to)
+    if isinstance(target_event, RoomGetEventError):
+        error = target_event.message
+        logger.error(f"Failed to fetch event: {error}")
+        return
     to_sender = target_event.event.sender
     action = reference_text[len(prefix) :]
     if action.isascii():
@@ -269,6 +277,9 @@ async def send_multiquote_image(
     replace_map: dict,
 ):
     target_response = await client.room_get_event(room.room_id, reply_to)
+    if isinstance(target_response, RoomGetEventError):
+        error = target_response.message
+        raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
     target_event = target_response.event
     if isinstance(target_event, RedactedEvent):
         raise NyxBotRuntimeError("You can't start a multiquote on a redacted event.")
@@ -409,6 +420,9 @@ async def send_user_image(
         target_event = event
     else:
         target_response = await client.room_get_event(room.room_id, reply_to)
+        if isinstance(target_response, RoomGetEventError):
+            error = target_response.message
+            raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
         target_event = target_response.event
     sender = target_event.sender
     sender_name = room.user_name(sender)

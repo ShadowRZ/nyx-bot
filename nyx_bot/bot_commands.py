@@ -3,7 +3,14 @@ from calendar import THURSDAY
 from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta
-from nio import AsyncClient, MatrixRoom, RoomMessageImage, RoomMessageText, StickerEvent
+from nio import (
+    AsyncClient,
+    MatrixRoom,
+    RoomGetEventError,
+    RoomMessageImage,
+    RoomMessageText,
+    StickerEvent,
+)
 
 from nyx_bot.archcn_utils import send_archlinuxcn_pkg, update_archlinuxcn_pkg
 from nyx_bot.chat_functions import (
@@ -14,7 +21,7 @@ from nyx_bot.chat_functions import (
     send_user_image,
 )
 from nyx_bot.config import Config
-from nyx_bot.errors import NyxBotValueError
+from nyx_bot.errors import NyxBotRuntimeError, NyxBotValueError
 from nyx_bot.storage import MatrixMessage, MembershipUpdates, UserTag
 from nyx_bot.utils import parse_matrixdotto_link
 
@@ -114,7 +121,10 @@ class Command:
         target_response = await self.client.room_get_event(
             self.room.room_id, self.reply_to
         )
-        target_sender = target_response.event.sender
+        if isinstance(target_response, RoomGetEventError):
+            error = target_response.message
+            raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
+        target_sender = target_response.nse.event.sender
         changes = (
             MembershipUpdates.select()
             .where(
@@ -281,7 +291,10 @@ Outside of a reply, send the avatar of the command sender.\
         target_response = await self.client.room_get_event(
             self.room.room_id, self.reply_to
         )
-        target_event = target_response.event
+        if isinstance(target_response, RoomGetEventError):
+            error = target_response.message
+            raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
+        target_event = target_response.nse.event
         if isinstance(target_event, RoomMessageImage):
             content = target_event.source.get("content")
             info = content["info"]
@@ -363,6 +376,9 @@ Others:
         target_event = await self.client.room_get_event(
             self.room.room_id, self.reply_to
         )
+        if isinstance(target_event, RoomGetEventError):
+            error = target_event.message
+            raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
         sender = target_event.event.sender
         if not self.args:
             user_tag = UserTag.get_or_none(
@@ -407,5 +423,8 @@ Others:
         target_event = await self.client.room_get_event(
             self.room.room_id, self.reply_to
         )
+        if isinstance(target_event, RoomGetEventError):
+            error = target_event.message
+            raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
         sender = target_event.event.sender
         UserTag.delete_user_tag(self.room.room_id, sender)

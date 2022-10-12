@@ -3,9 +3,17 @@ from io import BytesIO
 from typing import Optional
 from urllib.parse import unquote, urlparse
 
-from nio import AsyncClient, Event, MatrixRoom, RoomMessageText
+from nio import (
+    AsyncClient,
+    DownloadError,
+    Event,
+    MatrixRoom,
+    RoomGetEventError,
+    RoomMessageText,
+)
 from wand.image import Image
 
+from nyx_bot.errors import NyxBotRuntimeError
 from nyx_bot.parsers import MatrixHTMLParser
 from nyx_bot.quote_image import make_quote_image
 from nyx_bot.storage import UserTag
@@ -26,11 +34,17 @@ async def get_body(
         replace_map = {}
     if event_id not in replace_map:
         target_response = await client.room_get_event(room_id, event_id)
+        if isinstance(target_response, RoomGetEventError):
+            error = target_response.message
+            raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
         target_event = target_response.event
         return target_event.body
     else:
         new_evid = replace_map.get(event_id)
         target_response = await client.room_get_event(room_id, new_evid)
+        if isinstance(target_response, RoomGetEventError):
+            error = target_response.message
+            raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
         target_event = target_response.event
         content = target_event.source.get("content")
         new_content = content.get("m.new_content")
@@ -42,11 +56,17 @@ async def get_formatted_body(
 ) -> Optional[str]:
     if event_id not in replace_map:
         target_response = await client.room_get_event(room.room_id, event_id)
+        if isinstance(target_response, RoomGetEventError):
+            error = target_response.message
+            raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
         target_event = target_response.event
         return target_event.formatted_body
     else:
         new_evid = replace_map.get(event_id)
         target_response = await client.room_get_event(room.room_id, new_evid)
+        if isinstance(target_response, RoomGetEventError):
+            error = target_response.message
+            raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
         target_event = target_response.event
         content = target_event.source.get("content")
         new_content = content.get("m.new_content")
@@ -157,6 +177,9 @@ async def make_single_quote_image(
             server_name = url.netloc
             media_id = url.path.replace("/", "")
             avatar_resp = await client.download(server_name, media_id)
+            if isinstance(avatar_resp, DownloadError):
+                error = avatar_resp.message
+                raise NyxBotRuntimeError(f"Failed to download {url}: {error}")
             data = avatar_resp.body
             bytesio = BytesIO(data)
             image = Image(file=bytesio)
