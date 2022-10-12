@@ -179,7 +179,7 @@ async def make_single_quote_image(
             avatar_resp = await client.download(server_name, media_id)
             if isinstance(avatar_resp, DownloadError):
                 error = avatar_resp.message
-                raise NyxBotRuntimeError(f"Failed to download {url}: {error}")
+                raise NyxBotRuntimeError(f"Failed to download {sender_avatar}: {error}")
             data = avatar_resp.body
             bytesio = BytesIO(data)
             image = Image(file=bytesio)
