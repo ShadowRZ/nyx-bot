@@ -9,6 +9,7 @@ from typing import Optional
 
 from wand.drawing import Drawing
 from wand.image import Image
+from wand.version import MAGICK_VERSION_INFO
 
 import nyx_bot
 
@@ -67,7 +68,10 @@ async def make_quote_image(
         with avatar.clone() as img, Image(filename=MASK_FILE) as mask:
             img.resize(AVATAR_SIZE, AVATAR_SIZE)
             img.alpha_channel = True
-            img.composite_channel("default", mask, "copy_alpha", 0, 0)
+            if MAGICK_VERSION_INFO[0] == 7:
+                img.composite_channel("default", mask, "copy_alpha", 0, 0)
+            else:
+                img.composite_channel("default", mask, "copy_opacity", 0, 0)
             draw.composite(
                 "overlay", BORDER_MARGIN, BORDER_MARGIN, AVATAR_SIZE, AVATAR_SIZE, img
             )
