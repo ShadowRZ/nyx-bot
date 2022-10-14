@@ -4,12 +4,12 @@ import traceback
 from html import escape
 from io import BytesIO
 from typing import Optional, Union
-from urllib.parse import urlparse
 
 import magic
 from markdown import markdown
 from nio import (
     AsyncClient,
+    DownloadError,
     ErrorResponse,
     MatrixRoom,
     RedactedEvent,
@@ -431,10 +431,10 @@ async def send_user_image(
     length = 0
     mimetype = None
     if sender_avatar:
-        url = urlparse(sender_avatar)
-        server_name = url.netloc
-        media_id = url.path.replace("/", "")
-        avatar_resp = await client.download(server_name, media_id)
+        avatar_resp = await client.download(mxc=sender_avatar)
+        if isinstance(avatar_resp, DownloadError):
+            error = avatar_resp.message
+            raise NyxBotRuntimeError(f"Failed to download {sender_avatar}: {error}")
         data = avatar_resp.body
         mimetype = magic.from_buffer(data, mime=True)
         bytesio = BytesIO(data)
