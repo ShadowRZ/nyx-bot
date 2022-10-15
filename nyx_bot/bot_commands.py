@@ -72,7 +72,9 @@ class Command:
         elif self.command.startswith("update_archlinuxcn"):
             await self._update_archlinuxcn()
         elif self.command.startswith("multiquote"):
-            await self._multiquote()
+            await self._multiquote(False)
+        elif self.command.startswith("forward_multiquote"):
+            await self._multiquote(True)
         elif self.command.startswith("send_avatar"):
             await self._send_avatar()
         elif self.command.startswith("avatar_changes"):
@@ -184,7 +186,7 @@ class Command:
             literal_text=True,
         )
 
-    async def _multiquote(self):
+    async def _multiquote(self, forward: bool):
         """Make a new multiquote image. This command must be used on a reply."""
         if not self.reply_to:
             raise NyxBotValueError("Please reply to a text message.")
@@ -205,6 +207,7 @@ class Command:
             self.reply_to,
             self.replace_map,
             self.command_prefix,
+            forward,
         )
 
     async def _stat(self):

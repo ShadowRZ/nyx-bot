@@ -13,12 +13,13 @@ async def make_multiquote_image(
     replace_map: dict,
     self_event: RoomMessageText,
     command_prefix: str,
+    forward: bool,
 ) -> Image:
     images = []
     show_user = True
     sender = None
     for next_event in await fetch_events(
-        client, room, first_event, limit, self_event, command_prefix
+        client, room, first_event, limit, self_event, command_prefix, forward
     ):
         show_user = sender != next_event.sender
         sender = next_event.sender
@@ -49,13 +50,17 @@ async def fetch_events(
     limit: int,
     self_event: RoomMessageText,
     command_prefix: str,
+    forward: bool,
 ):
     events = []
     event_marker = first_event
     events.append(first_event)
     while len(events) < limit:
         context_resp = await client.room_context(room.room_id, event_marker.event_id)
-        collected_events = context_resp.events_after
+        if forward:
+            collected_events = context_resp.events_after
+        else:
+            collected_events = context_resp.events_before
         for event in collected_events:
             event_id = event.event_id
             # Ignore control message

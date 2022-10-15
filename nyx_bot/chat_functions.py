@@ -276,6 +276,7 @@ async def send_multiquote_image(
     reply_to: str,
     replace_map: dict,
     command_prefix: str,
+    forward: bool,
 ):
     target_response = await client.room_get_event(room.room_id, reply_to)
     if isinstance(target_response, RoomGetEventError):
@@ -286,7 +287,14 @@ async def send_multiquote_image(
         raise NyxBotRuntimeError("You can't start a multiquote on a redacted event.")
     elif isinstance(target_event, RoomMessageText):
         quote_image = await make_multiquote_image(
-            client, room, target_event, limit, replace_map, event, command_prefix
+            client,
+            room,
+            target_event,
+            limit,
+            replace_map,
+            event,
+            command_prefix,
+            forward,
         )
         await send_sticker_image(
             client, room.room_id, quote_image, "[Multiquote]", event.event_id
