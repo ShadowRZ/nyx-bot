@@ -38,6 +38,7 @@ class Command:
         event: RoomMessageText,
         reply_to: str,
         replace_map: dict,
+        command_prefix: str,
     ):
         """A command made by a user.
 
@@ -60,6 +61,7 @@ class Command:
         self.args = self.command.split()[1:]
         self.reply_to = reply_to
         self.replace_map = replace_map
+        self.command_prefix = command_prefix
 
     async def process(self):
         """Process the command"""
@@ -202,6 +204,7 @@ class Command:
             limit,
             self.reply_to,
             self.replace_map,
+            self.command_prefix,
         )
 
     async def _stat(self):

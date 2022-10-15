@@ -115,6 +115,7 @@ class Callbacks:
                 event,
                 reply_to,
                 self.replace_map,
+                self.command_prefix,
             )
             try:
                 await command.process()

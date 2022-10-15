@@ -2,7 +2,7 @@ from nio import AsyncClient, MatrixRoom, RoomMessageText
 from wand.drawing import Drawing
 from wand.image import Image
 
-from nyx_bot.utils import make_single_quote_image
+from nyx_bot.utils import make_single_quote_image, strip_beginning_quote
 
 
 async def make_multiquote_image(
@@ -12,11 +12,14 @@ async def make_multiquote_image(
     limit: int,
     replace_map: dict,
     self_event: RoomMessageText,
+    command_prefix: str,
 ) -> Image:
     images = []
     show_user = True
     sender = None
-    for next_event in await fetch_events(client, room, first_event, limit, self_event):
+    for next_event in await fetch_events(
+        client, room, first_event, limit, self_event, command_prefix
+    ):
         show_user = sender != next_event.sender
         sender = next_event.sender
         if isinstance(next_event, RoomMessageText):
@@ -45,6 +48,7 @@ async def fetch_events(
     first_event: RoomMessageText,
     limit: int,
     self_event: RoomMessageText,
+    command_prefix: str,
 ):
     events = []
     event_marker = first_event
@@ -59,7 +63,10 @@ async def fetch_events(
                 continue
             # Only take actual text events
             if isinstance(event, RoomMessageText):
-                events.append(event)
+                event_body = strip_beginning_quote(event.body)
+                has_command_prefix = event_body.startswith(command_prefix)
+                if not has_command_prefix:
+                    events.append(event)
             # Update event marker
             event_marker = event
 
