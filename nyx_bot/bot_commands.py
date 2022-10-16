@@ -128,7 +128,7 @@ class Command:
         if isinstance(target_response, RoomGetEventError):
             error = target_response.message
             raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
-        target_sender = target_response.nse.event.sender
+        target_sender = target_response.event.sender
         changes = (
             MembershipUpdates.select()
             .where(
