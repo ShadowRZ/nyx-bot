@@ -334,36 +334,11 @@ Outside of a reply, send the avatar of the command sender.\
 
     async def _show_help(self):
         """Show the help text"""
-        if not self.args:
-            text = (
-                "Nyx Bot via matrix-nio\n\nUse `help commands` to view "
-                "available commands."
-            )
-            await send_text_to_room(self.client, self.room.room_id, text)
-            return
-
-        topic = self.args[0]
-        if topic == "commands":
-            text = """\
-Only avaliable on a reply:
-
-* `quote`: Make a new quote image.
-* `send_as_sticker`: Turn an image into a sticker.
-* `multiquote [count]`: (count is in [2, 6]) Make a new multiquote image.
-
-Usable anywhere:
-
-* `archlinuxcn [package]`: Query a package in [archlinuxcn].
-* `emit_statistics`: Show statistics.
-* `crazy_thursday`: On Thrusday, print "Crazy Thursday !!". Otherwise print remaining time to next Thursday.
-
-Others:
-
-* `send_avatar`: In a reply, send the avatar of the person being replied to. Outside of a reply, send the avatar of the command sender.
-"""
-        else:
-            text = "Unknown help topic!"
-        await send_text_to_room(self.client, self.room.room_id, text)
+        text = (
+            "Nyx Bot via matrix-nio\n\nCommands reference is avaliable at "
+            "https://github.com/ShadowRZ/nyx-bot/blob/master/COMMANDS.md"
+        )
+        await send_text_to_room(self.client, self.room.room_id, text, notice=False)
 
     async def _unknown_command(self):
         await send_text_to_room(
