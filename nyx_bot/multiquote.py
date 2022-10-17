@@ -83,4 +83,7 @@ async def fetch_events(
     # Sort events
     events.sort(key=lambda ev: ev.server_timestamp)
     # Return them
-    return events[-limit:]
+    if forward:
+        return events[:limit]
+    else:
+        return events[-limit:]
