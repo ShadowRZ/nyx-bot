@@ -2,7 +2,7 @@ from nio import AsyncClient, MatrixRoom, RoomMessageText
 from wand.drawing import Drawing
 from wand.image import Image
 
-from nyx_bot.utils import make_single_quote_image, strip_beginning_quote
+from nyx_bot.utils import get_replaces, make_single_quote_image, strip_beginning_quote
 
 
 async def make_multiquote_image(
@@ -59,12 +59,17 @@ async def fetch_events(
         context_resp = await client.room_context(room.room_id, event_marker.event_id)
         if forward:
             collected_events = context_resp.events_after
+            collected_events.sort(key=lambda ev: ev.server_timestamp, reverse=False)
         else:
             collected_events = context_resp.events_before
+            collected_events.sort(key=lambda ev: ev.server_timestamp, reverse=True)
         for event in collected_events:
             event_id = event.event_id
             # Ignore control message
             if event_id == self_event.event_id:
+                continue
+            # Ignore editing messages
+            if get_replaces(event) is not None:
                 continue
             # Only take actual text events
             if isinstance(event, RoomMessageText):
@@ -78,4 +83,4 @@ async def fetch_events(
     # Sort events
     events.sort(key=lambda ev: ev.server_timestamp)
     # Return them
-    return events[:limit]
+    return events[-limit:]
