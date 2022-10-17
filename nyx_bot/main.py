@@ -18,10 +18,12 @@ from nio import (
     UnknownEvent,
 )
 from nio.store.database import DefaultStore
+from peewee import OperationalError
 from playhouse.db_url import connect
 
 from nyx_bot.callbacks import Callbacks
 from nyx_bot.config import Config
+from nyx_bot.migrations import migrate_db
 from nyx_bot.storage import (
     ArchPackage,
     MatrixMessage,
@@ -51,6 +53,10 @@ async def main():
     db.connect()
     db.bind([MatrixMessage, UserTag, MembershipUpdates])
     db.create_tables([MatrixMessage, UserTag, MembershipUpdates])
+    try:
+        migrate_db(db)
+    except OperationalError:
+        pass
 
     pacman_db = os.path.join(config.store_path, "pacman_pkginfo.db")
     pkginfo_database.init(pacman_db)

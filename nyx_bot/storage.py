@@ -16,6 +16,8 @@ from peewee import (
     chunked,
 )
 
+from nyx_bot.errors import NyxBotRuntimeError
+
 
 class MatrixMessage(Model):
     room_id = CharField()
@@ -110,6 +112,7 @@ class UserTag(Model):
     room_id = CharField()
     sender = CharField()
     tag = CharField()
+    locked = BooleanField(default=False)
 
     @staticmethod
     def update_user_tag(room_id: str, sender: str, tag: str):
@@ -118,14 +121,20 @@ class UserTag(Model):
         )
         if not user_tag:
             user_tag = UserTag(room_id=room_id, sender=sender)
+        if user_tag.locked:
+            raise NyxBotRuntimeError("The tag is locked and could not be changed.")
         user_tag.tag = tag
+        user_tag.locked = False
         user_tag.save()
 
     @staticmethod
     def delete_user_tag(room_id: str, sender: str):
-        UserTag.delete().where(
+        user_tag = UserTag.get_or_none(
             (UserTag.room_id == room_id) & (UserTag.sender == sender)
-        ).execute()
+        )
+        if user_tag.locked:
+            raise NyxBotRuntimeError("The tag is locked and could not be deleted.")
+        user_tag.delete_instance()
 
 
 pkginfo_database = SqliteDatabase(None)
