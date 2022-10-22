@@ -1,5 +1,4 @@
 import logging
-import re
 import time
 
 from nio import (
@@ -13,10 +12,17 @@ from nio import (
 )
 
 from nyx_bot.bot_commands import Command
-from nyx_bot.chat_functions import send_exception, send_jerryxiao
+from nyx_bot.chat_functions import send_exception
 from nyx_bot.config import Config
+from nyx_bot.message_responses import Message
 from nyx_bot.storage import MatrixMessage, MembershipUpdates
-from nyx_bot.utils import get_external_url, get_replaces, get_reply_to, make_datetime
+from nyx_bot.utils import (
+    get_external_url,
+    get_replaces,
+    get_reply_to,
+    make_datetime,
+    strip_beginning_quote,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +64,7 @@ class Callbacks:
             self.replace_map[event_replace] = event.event_id
 
         # Extract the message text
-        msg = event.body
+        msg = strip_beginning_quote(event.body)
 
         # Ignore messages from ourselves
         if event.sender == self.client.user:
@@ -72,35 +78,26 @@ class Callbacks:
         reply_to = get_reply_to(event)
         logger.debug(f"In-Reply-To: {reply_to}")
 
-        has_jerryxiao_prefix = False
-        has_command_prefix = False
-        for i in msg.splitlines():
-            if re.match("^(!!|\\\\|/|¡¡)", i):
-                has_jerryxiao_prefix = True
-                msg = i
-                break
-            elif i.startswith(self.command_prefix):
-                has_command_prefix = True
-                msg = i
-                break
+        # Process as message if in a public room without command prefix
+        has_command_prefix = msg.startswith(self.command_prefix)
 
-        if room.room_id in self.disable_jerryxiao_for:
-            # Stop considering JerryXiao prefix.
-            has_jerryxiao_prefix = False
-
-        if has_jerryxiao_prefix and reply_to:
-            if msg.startswith("/"):
-                await send_jerryxiao(self.client, room, event, "/", reply_to, msg)
-            elif msg.startswith("!!"):
-                await send_jerryxiao(self.client, room, event, "!!", reply_to, msg)
-            elif msg.startswith("\\"):
-                await send_jerryxiao(
-                    self.client, room, event, "\\", reply_to, msg, True
-                )
-            elif msg.startswith("¡¡"):
-                await send_jerryxiao(
-                    self.client, room, event, "¡¡", reply_to, msg, True
-                )
+        # room.is_group is often a DM, but not always.
+        # room.is_group does not allow room aliases
+        # room.member_count > 2 ... we assume a public room
+        # room.member_count <= 2 ... we assume a DM
+        if not has_command_prefix and room.member_count > 2:
+            # General message listener
+            message = Message(
+                self.client,
+                self.config,
+                msg,
+                room,
+                event,
+                reply_to,
+                self.disable_jerryxiao_for,
+            )
+            await message.process()
+            return
 
         # Treat it as a command only if it has a prefix
         if has_command_prefix:
