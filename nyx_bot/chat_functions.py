@@ -36,6 +36,7 @@ from nyx_bot.utils import (
     make_datetime,
     make_single_quote_image,
     strip_beginning_quote,
+    user_name,
 )
 
 logger = logging.getLogger(__name__)
@@ -457,22 +458,23 @@ async def bulk_update_messages(
 
 
 def gen_result_randomdraw(
-    query: str, username: str, user_id: int, prob: bool = False
+    room: MatrixRoom, query: str, user_id: str, hash_: int, prob: bool = False
 ) -> str:
     if not query:
-        seed = int("{}{}".format(time.strftime("%Y%m%d", time.localtime()), user_id))
+        seed = int("{}{}".format(time.strftime("%Y%m%d", time.localtime()), hash_))
     else:
         seed = int(
             "{}{}{}".format(
                 int(hashlib.md5(query.encode("utf-8")).hexdigest(), 16),
                 time.strftime("%Y%m%d", time.localtime()),
-                user_id,
+                hash_,
             )
         )
     random.seed(a=seed, version=2)
     draw_result = random.randint(0, 10000) / 10000
     random.seed(a=seed, version=2)
     result_type = random.randint(0, 1)
+    user_pill = make_pill(user_id, user_name(room, user_id))
     if prob:
         result = draw_result if result_type else 1.0 - draw_result
         result = f"{result*100:.2f}%"
@@ -486,15 +488,15 @@ def gen_result_randomdraw(
     if len(query) == 0:
         if prob:
             result = "你好, {}\n汝今天{}概率是 {}".format(
-                username, "行大运" if result_type else "倒大霉", result
+                user_pill, "行大运" if result_type else "倒大霉", result
             )
         else:
-            result = "你好, {}\n汝的今日运势: {}".format(username, result)
+            result = "你好, {}\n汝的今日运势: {}".format(user_pill, result)
     else:
         if prob:
             result = "你好, {}\n所求事项: {}\n结果: 此事有 {} 的概率{}".format(
-                username, query, result, "发生" if result_type else "不发生"
+                user_pill, query, result, "发生" if result_type else "不发生"
             )
         else:
-            result = "你好, {}\n所求事项: {}\n结果: {}".format(username, query, result)
+            result = "你好, {}\n所求事项: {}\n结果: {}".format(user_pill, query, result)
     return result

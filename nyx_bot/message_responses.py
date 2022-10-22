@@ -7,7 +7,6 @@ from nio import AsyncClient, MatrixRoom, RoomMessageText
 from nyx_bot.chat_functions import gen_result_randomdraw, send_text_to_room
 from nyx_bot.config import Config
 from nyx_bot.jerryxiao import send_jerryxiao
-from nyx_bot.utils import user_name
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +57,11 @@ class Message:
     async def _randomdraw(self, query: str, prob: bool) -> None:
         sender = self.event.sender
         msg = gen_result_randomdraw(
-            query.strip(), user_name(self.room, sender), crc32(sender.encode()), prob
+            self.room,
+            query.strip(),
+            sender,
+            crc32(sender.encode()),
+            prob,
         )
         await send_text_to_room(
             self.client,
