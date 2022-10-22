@@ -1,5 +1,8 @@
+import hashlib
 import logging
+import random
 import re
+import time
 from html import escape
 from io import BytesIO
 from typing import Optional, Union
@@ -451,3 +454,47 @@ async def bulk_update_messages(
                 )
                 count += 1
         sync_token = messages_resp.end
+
+
+def gen_result_randomdraw(
+    query: str, username: str, user_id: int, prob: bool = False
+) -> str:
+    if not query:
+        seed = int("{}{}".format(time.strftime("%Y%m%d", time.localtime()), user_id))
+    else:
+        seed = int(
+            "{}{}{}".format(
+                int(hashlib.md5(query.encode("utf-8")).hexdigest(), 16),
+                time.strftime("%Y%m%d", time.localtime()),
+                user_id,
+            )
+        )
+    random.seed(a=seed, version=2)
+    draw_result = random.randint(0, 10000) / 10000
+    random.seed(a=seed, version=2)
+    result_type = random.randint(0, 1)
+    if prob:
+        result = draw_result if result_type else 1.0 - draw_result
+        result = f"{result*100:.2f}%"
+    else:
+        CHOICE = ("大凶", "凶", "小凶", "尚可", "小吉", "吉", "大吉")
+        MAXIDX = len(CHOICE) - 1
+        resultidx = int(draw_result * len(CHOICE))
+        resultidx = 0 if resultidx < 0 else resultidx
+        resultidx = MAXIDX if resultidx > MAXIDX else resultidx
+        result = CHOICE[resultidx]
+    if len(query) == 0:
+        if prob:
+            result = "你好, {}\n汝今天{}概率是 {}".format(
+                username, "行大运" if result_type else "倒大霉", result
+            )
+        else:
+            result = "你好, {}\n汝的今日运势: {}".format(username, result)
+    else:
+        if prob:
+            result = "你好, {}\n所求事项: {}\n结果: 此事有 {} 的概率{}".format(
+                username, query, result, "发生" if result_type else "不发生"
+            )
+        else:
+            result = "你好, {}\n所求事项: {}\n结果: {}".format(username, query, result)
+    return result
