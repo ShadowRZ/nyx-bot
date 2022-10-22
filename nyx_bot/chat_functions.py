@@ -1,6 +1,5 @@
 import logging
 import re
-import traceback
 from html import escape
 from io import BytesIO
 from typing import Optional, Union
@@ -503,7 +502,7 @@ async def send_exception(
         exception_str = str(inst)
         if str != "":
             string += f": {exception_str}"
-        traceback.print_exception(inst)
+        logger.exception(string)
     await send_text_to_room(
         client,
         room_id,
