@@ -58,7 +58,7 @@ class Message:
     async def _randomdraw(self, query: str, prob: bool) -> None:
         sender = self.event.sender
         msg = gen_result_randomdraw(
-            query, user_name(self.room, sender), crc32(sender.encode()), prob
+            query.strip(), user_name(self.room, sender), crc32(sender.encode()), prob
         )
         await send_text_to_room(
             self.client,
