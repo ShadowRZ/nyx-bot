@@ -52,3 +52,6 @@ logging:
 # Disable Jerry Xiao like feature for the following room ID
 disable_jerryxiao_for:
   - '!XXXXXXXXXXXXXXXXXX:example.com'
+
+disable_randomdraw_for:
+  - '!XXXXXXXXXXXXXXXXXX:example.com'

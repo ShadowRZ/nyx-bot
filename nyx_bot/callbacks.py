@@ -38,6 +38,7 @@ class Callbacks:
         self.client = client
         self.config = config
         self.disable_jerryxiao_for = config.disable_jerryxiao_for
+        self.disable_randomdraw_for = config.disable_randomdraw_for
         self.command_prefix = config.command_prefix
         self.replace_map = {}
 

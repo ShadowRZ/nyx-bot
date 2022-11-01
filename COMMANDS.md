@@ -18,6 +18,7 @@ The difference between `multiquote` and `forward_multiquote` is the messages to 
 * `update_archlinuxcn`: Update the database used by `archlinuxcn` command.
 * `emit_statistics`: Show statistics.
 * `crazy_thursday`: On Thrusday, print "Crazy Thursday !!". Otherwise print remaining time to next Thursday.
+* `room_id`: Print the Matrix Room ID.
 
 ## Others
 

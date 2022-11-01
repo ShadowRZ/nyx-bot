@@ -26,6 +26,7 @@ from nyx_bot.config import Config
 from nyx_bot.migrations import migrate_db
 from nyx_bot.storage import (
     ArchPackage,
+    DatabaseVersion,
     MatrixMessage,
     MembershipUpdates,
     UserTag,
@@ -51,8 +52,8 @@ async def main():
     # Configure the database
     db = connect(config.database["connection_string"])
     db.connect()
-    db.bind([MatrixMessage, UserTag, MembershipUpdates])
-    db.create_tables([MatrixMessage, UserTag, MembershipUpdates])
+    db.bind([MatrixMessage, UserTag, MembershipUpdates, DatabaseVersion])
+    db.create_tables([MatrixMessage, UserTag, MembershipUpdates, DatabaseVersion])
     try:
         migrate_db(db)
     except OperationalError:

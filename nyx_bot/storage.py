@@ -257,3 +257,7 @@ def update_package_info(data_source, repo):
 
         for batch in chunked(should_insert, 100):
             ArchPackage.insert_many(batch).execute()
+
+
+class DatabaseVersion(Model):
+    version = IntegerField()

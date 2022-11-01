@@ -55,7 +55,7 @@ class Message:
             await self._randomdraw(query, True)
 
     async def _randomdraw(self, query: str, prob: bool) -> None:
-        if self.room.room_id in self.disable_jerryxiao_for:
+        if self.room.room_id in self.disable_randomdraw_for:
             return
         sender = self.event.sender
         msg = gen_result_randomdraw(

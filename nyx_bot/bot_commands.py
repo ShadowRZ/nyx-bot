@@ -95,6 +95,8 @@ class Command:
             await self._remove_tag()
         elif self.command.startswith("update"):
             await self._update()
+        elif self.command.startswith("room_id"):
+            await self._room_id()
         else:
             await self._unknown_command()
 
@@ -180,6 +182,17 @@ class Command:
             self.client,
             self.room.room_id,
             "Done.",
+            notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
+
+    async def _room_id(self):
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            self.room.room_id,
             notice=False,
             markdown_convert=False,
             reply_to_event_id=self.event.event_id,
