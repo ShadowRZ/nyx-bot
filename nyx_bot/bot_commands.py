@@ -23,7 +23,7 @@ from nyx_bot.chat_functions import (
 from nyx_bot.config import Config
 from nyx_bot.errors import NyxBotRuntimeError, NyxBotValueError
 from nyx_bot.storage import MatrixMessage, MembershipUpdates, UserTag
-from nyx_bot.utils import parse_matrixdotto_link
+from nyx_bot.utils import make_divergence, parse_matrixdotto_link
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +97,8 @@ class Command:
             await self._update()
         elif self.command.startswith("room_id"):
             await self._room_id()
+        elif self.command.startswith("divergence"):
+            await self._divergence()
         else:
             await self._unknown_command()
 
@@ -193,6 +195,18 @@ class Command:
             self.client,
             self.room.room_id,
             self.room.room_id,
+            notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
+
+    async def _divergence(self):
+        text = "%f%%" % make_divergence(self.room)
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            text,
             notice=False,
             markdown_convert=False,
             reply_to_event_id=self.event.event_id,

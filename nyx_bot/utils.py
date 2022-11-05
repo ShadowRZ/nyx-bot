@@ -1,7 +1,9 @@
 from datetime import datetime
 from io import BytesIO
+from random import Random
 from typing import Optional
 from urllib.parse import unquote, urlparse
+from zlib import crc32
 
 from nio import (
     AsyncClient,
@@ -192,3 +194,9 @@ async def make_single_quote_image(
         tag_name = f"#{user_tag.tag}"
     quote_image = await make_quote_image(sender_name, body, image, formatted, tag_name)
     return quote_image
+
+
+def make_divergence(room: MatrixRoom):
+    seed = crc32(room.room_id.encode())
+    divergence = Random(seed)
+    return divergence.random()
