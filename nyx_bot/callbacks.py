@@ -96,6 +96,7 @@ class Callbacks:
                 event,
                 reply_to,
                 self.disable_jerryxiao_for,
+                self.disable_randomdraw_for,
             )
             await message.process()
             return

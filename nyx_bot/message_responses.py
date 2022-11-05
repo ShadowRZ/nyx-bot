@@ -21,6 +21,7 @@ class Message:
         event: RoomMessageText,
         reply_to: str,
         disable_jerryxiao_for,
+        disable_randomdraw_for,
     ):
         """Initialize a new Message
 
@@ -42,6 +43,7 @@ class Message:
         self.event = event
         self.reply_to = reply_to
         self.disable_jerryxiao_for = disable_jerryxiao_for
+        self.disable_randomdraw_for = disable_randomdraw_for
 
     async def process(self) -> None:
         """Process and possibly respond to the message"""
