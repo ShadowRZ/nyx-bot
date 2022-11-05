@@ -98,8 +98,14 @@ class Callbacks:
                 self.disable_jerryxiao_for,
                 self.disable_randomdraw_for,
             )
-            await message.process()
-            return
+            try:
+                await message.process()
+            except Exception as inst:
+                # Clear any previous typing event
+                await self.client.room_typing(room.room_id, False)
+                await send_exception(self.client, inst, room.room_id, event.event_id)
+            finally:
+                return
 
         # Treat it as a command only if it has a prefix
         if has_command_prefix:
