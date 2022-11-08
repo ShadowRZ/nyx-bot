@@ -232,7 +232,6 @@ class Command:
     async def _user_id(self):
         if not self.reply_to:
             raise NyxBotValueError("Please reply to a message for sending user ID.")
-        await self.client.room_typing(self.room.room_id)
         target_response = await self.client.room_get_event(
             self.room.room_id, self.reply_to
         )
