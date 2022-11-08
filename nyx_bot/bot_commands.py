@@ -99,6 +99,8 @@ class Command:
             await self._room_id()
         elif self.command.startswith("user_id"):
             await self._user_id()
+        elif self.command.startswith("last_message"):
+            await self._last_message()
         elif self.command.startswith("divergence"):
             await self._divergence()
         else:
@@ -121,6 +123,30 @@ class Command:
         if not self.args:
             raise NyxBotValueError("No package given.")
         await send_archlinuxcn_pkg(self.client, self.room, self.event, self.args[0])
+
+    async def _last_message(self):
+        if not self.args:
+            raise NyxBotValueError("No user ID given.")
+        target_sender = self.args[0]
+        result = (
+            MatrixMessage.select()
+            .where(
+                (MatrixMessage.room_id == self.room.room_id)
+                & (MatrixMessage.sender == target_sender)
+            )
+            .order_by(MatrixMessage.origin_server_ts.desc())
+            .get()
+        )
+        matrixdotto_url = f"https://matrix.to/#/{self.room.room_id}/{result.event_id}"
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            f"Last event: {matrixdotto_url}",
+            notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
 
     async def _avatar_changes(self):
         if not self.reply_to:
@@ -205,9 +231,7 @@ class Command:
 
     async def _user_id(self):
         if not self.reply_to:
-            raise NyxBotValueError(
-                "Please reply to a message for sending user ID."
-            )
+            raise NyxBotValueError("Please reply to a message for sending user ID.")
         await self.client.room_typing(self.room.room_id)
         target_response = await self.client.room_get_event(
             self.room.room_id, self.reply_to
