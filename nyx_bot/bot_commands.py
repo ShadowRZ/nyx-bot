@@ -97,6 +97,8 @@ class Command:
             await self._update()
         elif self.command.startswith("room_id"):
             await self._room_id()
+        elif self.command.startswith("user_id"):
+            await self._user_id()
         elif self.command.startswith("divergence"):
             await self._divergence()
         else:
@@ -195,6 +197,29 @@ class Command:
             self.client,
             self.room.room_id,
             self.room.room_id,
+            notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
+
+    async def _user_id(self):
+        if not self.reply_to:
+            raise NyxBotValueError(
+                "Please reply to a message for sending user ID."
+            )
+        await self.client.room_typing(self.room.room_id)
+        target_response = await self.client.room_get_event(
+            self.room.room_id, self.reply_to
+        )
+        if isinstance(target_response, RoomGetEventError):
+            error = target_response.message
+            raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
+        target_sender = target_response.event.sender
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            target_sender,
             notice=False,
             markdown_convert=False,
             reply_to_event_id=self.event.event_id,
