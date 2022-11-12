@@ -65,43 +65,43 @@ class Command:
 
     async def process(self):
         """Process the command"""
-        if self.command.startswith("quote"):
+        if self.command == "quote":
             await self._quote()
-        elif self.command.startswith("archlinuxcn"):
+        elif self.command == "archlinuxcn":
             await self._archlinuxcn()
-        elif self.command.startswith("update_archlinuxcn"):
+        elif self.command == "update_archlinuxcn":
             await self._update_archlinuxcn()
-        elif self.command.startswith("multiquote"):
+        elif self.command == "multiquote":
             await self._multiquote(False)
-        elif self.command.startswith("forward_multiquote"):
+        elif self.command == "forward_multiquote":
             await self._multiquote(True)
-        elif self.command.startswith("send_avatar"):
+        elif self.command == "send_avatar":
             await self._send_avatar()
-        elif self.command.startswith("avatar_changes"):
+        elif self.command == "avatar_changes":
             await self._avatar_changes()
-        elif self.command.startswith("crazy_thursday"):
+        elif self.command == "crazy_thursday":
             await self._crazy_thursday()
-        elif self.command.startswith("send_as_sticker"):
+        elif self.command == "send_as_sticker":
             await self._send_as_sticker()
-        elif self.command.startswith("emit_statistics"):
+        elif self.command == "emit_statistics":
             await self._stat()
-        elif self.command.startswith("parse_matrixdotto"):
+        elif self.command == "parse_matrixdotto":
             await self._parse_matrixdotto()
-        elif self.command.startswith("help"):
+        elif self.command == "help":
             await self._show_help()
-        elif self.command.startswith("tag"):
+        elif self.command == "tag":
             await self._tag()
-        elif self.command.startswith("remove_tag"):
+        elif self.command == "remove_tag":
             await self._remove_tag()
-        elif self.command.startswith("update"):
+        elif self.command == "update":
             await self._update()
-        elif self.command.startswith("room_id"):
+        elif self.command == "room_id":
             await self._room_id()
-        elif self.command.startswith("user_id"):
+        elif self.command == "user_id":
             await self._user_id()
-        elif self.command.startswith("last_message"):
+        elif self.command == "last_message":
             await self._last_message()
-        elif self.command.startswith("divergence"):
+        elif self.command == "divergence":
             await self._divergence()
         else:
             await self._unknown_command()
