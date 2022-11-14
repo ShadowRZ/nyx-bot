@@ -199,4 +199,12 @@ async def make_single_quote_image(
 def make_divergence(room: MatrixRoom):
     seed = crc32(room.room_id.encode())
     divergence = Random(seed)
-    return divergence.random()
+    first_value = divergence.gammavariate(1, 0.5)
+    if first_value >= 2:
+        result = first_value * divergence.random()
+        if result < 0.000001:
+            result = divergence.random() + first_value / 10
+    else:
+        result = first_value
+
+    return result
