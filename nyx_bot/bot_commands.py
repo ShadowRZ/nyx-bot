@@ -53,7 +53,7 @@ class Command:
 
             event: The event describing the command.
         """
-        all_args = self.command.split()[1:]
+        all_args = command.split()[1:]
         self.client = client
         self.config = config
         self.command = all_args[0]
