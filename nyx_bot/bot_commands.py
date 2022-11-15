@@ -53,12 +53,13 @@ class Command:
 
             event: The event describing the command.
         """
+        all_args = self.command.split()[1:]
         self.client = client
         self.config = config
-        self.command = command
+        self.command = all_args[0]
         self.room = room
         self.event = event
-        self.args = self.command.split()[1:]
+        self.args = all_args[1:]
         self.reply_to = reply_to
         self.replace_map = replace_map
         self.command_prefix = command_prefix
@@ -79,6 +80,8 @@ class Command:
             await self._send_avatar()
         elif self.command == "avatar_changes":
             await self._avatar_changes()
+        elif self.command == "name_changes":
+            await self._name_changes()
         elif self.command == "crazy_thursday":
             await self._crazy_thursday()
         elif self.command == "send_as_sticker":
@@ -182,6 +185,52 @@ class Command:
                 avatar_http = await self.client.mxc_to_http(avatar_url)
                 send_text += (
                     f"{i}: Changed to {avatar_http} ({change.datetime.isoformat()})\n"
+                )
+            if i < -3:
+                break
+        await self.client.room_typing(self.room.room_id, False)
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            send_text.rstrip(),
+            notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
+
+    async def _name_changes(self):
+        if not self.reply_to:
+            raise NyxBotValueError(
+                "Please reply to a message for sending avatar changes."
+            )
+        await self.client.room_typing(self.room.room_id)
+        target_response = await self.client.room_get_event(
+            self.room.room_id, self.reply_to
+        )
+        if isinstance(target_response, RoomGetEventError):
+            error = target_response.message
+            raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
+        target_sender = target_response.event.sender
+        changes = (
+            MembershipUpdates.select()
+            .where(
+                (MembershipUpdates.room_id == self.room.room_id)
+                & (MembershipUpdates.state_key == target_sender)
+            )
+            .order_by(MembershipUpdates.origin_server_ts.desc())
+        )
+        send_text = ""
+        i = 0
+        name_current = self.room.user_name(target_sender)
+        send_text += f"Current Name: {name_current}\n"
+        for change in changes:
+            name = change.name
+            prev_name = change.prev_name
+            if name != prev_name:
+                i -= 1
+                send_text += (
+                    f"{i}: Changed to {name} ({change.datetime.isoformat()})\n"
                 )
             if i < -3:
                 break
