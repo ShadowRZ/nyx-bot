@@ -382,14 +382,14 @@ async def send_user_image(
     with image:
         (width, height) = (image.width, image.height)
 
-    if mimetype == 'image/jpeg':
-        extension = '.jpg'
-    elif mimetype == 'image/png':
-        extension = '.png'
-    elif mimetype == 'image/webp':
-        extension = '.webp'
+    if mimetype == "image/jpeg":
+        extension = ".jpg"
+    elif mimetype == "image/png":
+        extension = ".png"
+    elif mimetype == "image/webp":
+        extension = ".webp"
     else:
-        extension = ''
+        extension = ""
 
     content = {
         "body": f"[Avatar of {sender_name}]{extension}",

@@ -53,7 +53,7 @@ class Command:
 
             event: The event describing the command.
         """
-        all_args = command.split()[1:]
+        all_args = command.split()
         self.client = client
         self.config = config
         self.command = all_args[0]
@@ -229,9 +229,7 @@ class Command:
             prev_name = change.prev_name
             if name != prev_name:
                 i -= 1
-                send_text += (
-                    f"{i}: Changed to {name} ({change.datetime.isoformat()})\n"
-                )
+                send_text += f"{i}: Changed to {name} ({change.datetime.isoformat()})\n"
             if i < -3:
                 break
         await self.client.room_typing(self.room.room_id, False)
