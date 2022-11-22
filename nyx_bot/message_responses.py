@@ -7,6 +7,7 @@ from nio import AsyncClient, MatrixRoom, RoomMessageText
 from nyx_bot.chat_functions import gen_result_randomdraw, send_text_to_room
 from nyx_bot.config import Config
 from nyx_bot.jerryxiao import send_jerryxiao
+from nyx_bot.trpg_dicer import get_trpg_dice_result
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,9 @@ class Message:
         elif self.message_content.startswith("@%"):
             query = self.message_content[2:]
             await self._randomdraw(query, True)
+        elif self.message_content.startswith("@="):
+            query = self.message_content[2:]
+            await self._trpg_dicer(query)
 
     async def _randomdraw(self, query: str, prob: bool) -> None:
         if self.room.room_id in self.disable_randomdraw_for:
@@ -71,6 +75,18 @@ class Message:
             self.client,
             self.room.room_id,
             msg,
+            notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
+
+    async def _trpg_dicer(self, query: str) -> None:
+        msg = get_trpg_dice_result(query.strip())
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            str(msg),
             notice=False,
             markdown_convert=False,
             reply_to_event_id=self.event.event_id,
