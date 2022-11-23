@@ -50,6 +50,7 @@ async def send_text_to_room(
     markdown_convert: bool = True,
     reply_to_event_id: Optional[str] = None,
     literal_text: Optional[bool] = False,
+    literal_text_substitute: Optional[str] = None,
 ) -> Union[RoomSendResponse, ErrorResponse]:
     """Send text to a matrix room.
 
@@ -130,7 +131,10 @@ async def send_text_to_room(
         body += ref_body.rstrip().replace("\n", "\n> ")
         body += "\n\n"
 
-    body += message
+    if literal_text_substitute:
+        body += literal_text_substitute
+    else:
+        body += message
 
     content = {
         "msgtype": msgtype,

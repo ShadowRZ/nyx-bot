@@ -1,17 +1,8 @@
 import logging
-from typing import Union
 
-from nio import (
-    AsyncClient,
-    ErrorResponse,
-    MatrixRoom,
-    RoomGetEventError,
-    RoomMessageText,
-    RoomSendResponse,
-    SendRetryError,
-)
+from nio import AsyncClient, MatrixRoom, RoomGetEventError, RoomMessageText
 
-from nyx_bot.chat_functions import make_pill
+from nyx_bot.chat_functions import make_pill, send_text_to_room
 
 logger = logging.getLogger(__name__)
 
@@ -43,31 +34,6 @@ def make_jerryxiao_reply(from_sender: str, to_sender: str, ref: str, room: Matri
     return (reply, reply_formatted)
 
 
-async def send_in_reply_to(
-    client: AsyncClient,
-    room_id: str,
-    event: RoomMessageText,
-    body: str,
-    formatted_body: str,
-) -> Union[RoomSendResponse, ErrorResponse]:
-    content = {
-        "msgtype": "m.text",
-        "format": "org.matrix.custom.html",
-        "body": body,
-        "formatted_body": formatted_body,
-    }
-    content["m.relates_to"] = {"m.in_reply_to": {"event_id": event.event_id}}
-    try:
-        return await client.room_send(
-            room_id,
-            "m.room.message",
-            content,
-            ignore_unverified_devices=True,
-        )
-    except SendRetryError:
-        logger.exception(f"Unable to send message response to {room_id}")
-
-
 async def send_jerryxiao(
     client: AsyncClient,
     room: MatrixRoom,
@@ -96,6 +62,12 @@ async def send_jerryxiao(
         send_text_tuple = make_jerryxiao_reply(from_sender, to_sender, action, room)
         send_text = send_text_tuple[0]
         send_text_formatted = send_text_tuple[1]
-        await send_in_reply_to(
-            client, room.room_id, event, send_text, send_text_formatted
+        await send_text_to_room(
+            client,
+            room.room_id,
+            send_text_formatted,
+            False,
+            False,
+            reply_to_event_id=event.event_id,
+            literal_text_substitute=send_text,
         )
