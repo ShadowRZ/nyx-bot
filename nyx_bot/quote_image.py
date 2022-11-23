@@ -102,7 +102,7 @@ async def render_text(text: str) -> str:
         "pango-view",
         "--background=#C0E5F5",
         "--foreground=black",
-        "--font=Source Han Sans SC 16",
+        "--font=Sarasa Gothic SC 16",
         "--antialias=gray",
         "--margin=0",
         "--hinting=full",

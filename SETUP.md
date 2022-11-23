@@ -100,6 +100,10 @@ command to install postgres dependencies alongside those that are necessary:
 pip install -e ".[postgres]"
 ```
 
+## Install fonts
+
+[Sarasa Gothic](https://github.com/be5invis/Sarasa-Gothic) should be installed for best quote image results. It is also recommanded to install the Noto Color Emoji font on the machine running the bot.
+
 ## Configuration
 
 Copy the sample configuration file to a new `config.yaml` file.
