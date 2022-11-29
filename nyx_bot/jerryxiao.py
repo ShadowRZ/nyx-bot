@@ -29,8 +29,13 @@ def make_jerryxiao_reply(from_sender: str, to_sender: str, ref: str, room: Matri
         )
         reply_formatted = f"{from_pill} 向 {to_pill} 发动了{effect}！"
     else:
-        reply = f"{room.user_name(from_sender)} {ref}了 {room.user_name(to_sender)}"
-        reply_formatted = f"{from_pill} {ref}了 {to_pill}"
+        splited = ref.split()
+        if len(splited) == 2:
+            reply = f"{room.user_name(from_sender)} {splited[0]}了 {room.user_name(to_sender)} 的{splited[1]}"
+            reply_formatted = f"{from_pill} {splited[0]}了 {to_pill} 的{splited[1]}"
+        else:
+            reply = f"{room.user_name(from_sender)} {ref}了 {room.user_name(to_sender)}"
+            reply_formatted = f"{from_pill} {ref}了 {to_pill}"
     return (reply, reply_formatted)
 
 
