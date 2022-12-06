@@ -98,6 +98,11 @@ class Message:
         if self.room.room_id in self.disable_jerryxiao_for:
             return
         msg = self.message_content
+
+        # If the first part of the message is pure ASCII, skip it
+        if msg.split()[0].isascii():
+            return
+
         if msg.startswith("/"):
             await send_jerryxiao(
                 self.client, self.room, self.event, "/", self.reply_to, msg
