@@ -69,7 +69,7 @@ async def main():
         max_timeouts=0,
         store=DefaultStore,
         store_sync_tokens=True,
-        encryption_enabled=False,
+        encryption_enabled=config.encryption,
     )
 
     # Initialize the matrix client

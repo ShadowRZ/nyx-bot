@@ -1,0 +1,2 @@
+-r requirements.txt
+matrix-nio[e2e]>=0.10.0

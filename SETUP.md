@@ -77,20 +77,22 @@ Install python dependencies:
 
 ```
 pip install -e .
+# Using requirements.txt
+pip install -r requirements.txt
 ```
 
-This projects uses [Wand](https://docs.wand-py.org) and requires you to install ImageMagick library.
+This project uses [Wand](https://docs.wand-py.org) and the `pango-view` CLI command, requiring you to install ImageMagick library and Pango CLI tools.
 
 Debian/Ubuntu:
 
 ```
-sudo apt install libmagickwand-dev
+sudo apt install libmagickwand-dev pango1.0-tools
 ```
 
 Arch:
 
 ```
-sudo pacman -S imagemagick
+sudo pacman -S imagemagick pango
 ```
 
 (Optional) If you want to use postgres as a database backend, use the following
