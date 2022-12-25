@@ -39,7 +39,7 @@ class Callbacks:
         self.config = config
         self.disable_jerryxiao_for = config.disable_jerryxiao_for
         self.disable_randomdraw_for = config.disable_randomdraw_for
-        self.record_message_content_for = config.record_mesaage_content_for
+        self.record_message_content_for = config.record_message_content_for
         self.command_prefix = config.command_prefix
         self.replace_map = {}
 
