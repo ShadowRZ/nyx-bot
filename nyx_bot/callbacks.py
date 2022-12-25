@@ -20,6 +20,7 @@ from nyx_bot.utils import (
     get_external_url,
     get_replaces,
     get_reply_to,
+    is_bot_event,
     make_datetime,
     strip_beginning_quote,
 )
@@ -65,6 +66,16 @@ class Callbacks:
 
         # Ignore messages from ourselves
         if event.sender == self.client.user:
+            if not is_bot_event(event):
+                include_text = True
+                # Record this message.
+                timestamp = make_datetime(event.server_timestamp)
+                external_url = get_external_url(event)
+                if room.room_id not in self.record_message_content_for:
+                    include_text = False
+                MatrixMessage.update_message(
+                    room, event, external_url, timestamp, event_replace, include_text
+                )
             return
 
         logger.debug(

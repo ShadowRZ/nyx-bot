@@ -97,6 +97,11 @@ def get_reply_to(event: Event) -> Optional[str]:
     return reply_to
 
 
+def is_bot_event(event: Event) -> bool:
+    content = event.source.get("content")
+    return "io.github.shadowrz.nyx_bot" in content
+
+
 def get_replaces(event: Event) -> Optional[str]:
     content = event.source.get("content")
     relates_to = content.get("m.relates_to") or {}
