@@ -108,10 +108,14 @@ class Config:
 
         self.command_prefix = self._get_cfg(["command_prefix"], default="!c") + " "
 
-        self.disable_jerryxiao_for = self._get_cfg(["disable_jerryxiao_for"], [])
-        self.disable_randomdraw_for = self._get_cfg(["disable_randomdraw_for"], [])
+        self.disable_jerryxiao_for = self._get_cfg(
+            ["disable_jerryxiao_for"], [], required=False
+        )
+        self.disable_randomdraw_for = self._get_cfg(
+            ["disable_randomdraw_for"], [], required=False
+        )
         self.record_message_content_for = self._get_cfg(
-            ["record_message_content_for"], []
+            ["record_message_content_for"], [], required=False
         )
         self.encryption = self._get_cfg(["encryption"], False)
 
