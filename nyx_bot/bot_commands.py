@@ -446,6 +446,11 @@ Outside of a reply, send the avatar of the command sender.\
             content["m.relates_to"] = {
                 "m.in_reply_to": {"event_id": self.event.event_id}
             }
+            # Add custom data for tracking bot message.
+            content["io.github.shadowrz.nyx_bot"] = {
+                "in_reply_to": self.event.event_id,
+                "type": "as_sticker",
+            }
             await self.client.room_send(
                 self.room.room_id, message_type="m.sticker", content=content
             )

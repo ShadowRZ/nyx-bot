@@ -25,6 +25,8 @@ class MatrixMessage(Model):
     origin_server_ts = IntegerField()
     external_url = CharField(null=True)
     sender = CharField()
+    body = TextField(null=True)
+    formatted_body = TextField(null=True)
     replaced_by = CharField(null=True)
     is_replacement = BooleanField(default=False)
     date = DateField()
@@ -46,6 +48,8 @@ class MatrixMessage(Model):
             message_db_item = MatrixMessage()
         message_db_item.room_id = room.room_id
         message_db_item.event_id = event.event_id
+        message_db_item.body = event.body
+        message_db_item.formatted_body = event.formatted_body
         message_db_item.origin_server_ts = event.server_timestamp
         message_db_item.external_url = external_url
         message_db_item.sender = event.sender

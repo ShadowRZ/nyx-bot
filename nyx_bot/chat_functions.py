@@ -159,6 +159,12 @@ async def send_text_to_room(
     if reply_to_event_id:
         content["m.relates_to"] = {"m.in_reply_to": {"event_id": reply_to_event_id}}
 
+    # Add custom data for tracking bot message.
+    content["io.github.shadowrz.nyx_bot"] = {
+        "in_reply_to": reply_to_event_id,
+        "type": "text",
+    }
+
     try:
         return await client.room_send(
             room_id,
@@ -333,6 +339,9 @@ async def send_sticker_image(
     if reply_to:
         content["m.relates_to"] = {"m.in_reply_to": {"event_id": reply_to}}
 
+    # Add custom data for tracking bot message.
+    content["io.github.shadowrz.nyx_bot"] = {"in_reply_to": reply_to, "type": "sticker"}
+
     try:
         await client.room_send(room_id, message_type="m.sticker", content=content)
         print("Image was sent successfully")
@@ -415,6 +424,12 @@ async def send_user_image(
     }
 
     content["m.relates_to"] = {"m.in_reply_to": {"event_id": event.event_id}}
+
+    # Add custom data for tracking bot message.
+    content["io.github.shadowrz.nyx_bot"] = {
+        "in_reply_to": event.event_id,
+        "type": "avatar",
+    }
 
     await client.room_send(room.room_id, message_type="m.room.message", content=content)
 
