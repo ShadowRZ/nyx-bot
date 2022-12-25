@@ -1,0 +1,29 @@
+on: [push]
+
+name: Prebuild word segmenter
+
+jobs:
+  cutword:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Build
+        run: |
+          cd cutword
+          cargo build --release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: nyx_bot-cutword
+          path: cutword/target/release/nyx_bot-cutword
+          if-no-files-found: error
