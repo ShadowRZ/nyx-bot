@@ -29,7 +29,7 @@ def migrate_db(db):
         migrate(migrator.add_column("matrixmessage", "body", MatrixMessage.body))
         migrate(
             migrator.add_column(
-                "matrixmessage", "gormatted_body", MatrixMessage.formatted_body
+                "matrixmessage", "formatted_body", MatrixMessage.formatted_body
             )
         )
 

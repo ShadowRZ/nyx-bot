@@ -83,10 +83,11 @@ class Callbacks:
         # room.member_count > 2 ... we assume a public room
         # room.member_count <= 2 ... we assume a DM
         if not has_command_prefix and room.member_count > 2:
+            include_text = True
             # Record this message.
             timestamp = make_datetime(event.server_timestamp)
             external_url = get_external_url(event)
-            if room.room_id in self.record_message_content_for:
+            if room.room_id not in self.record_message_content_for:
                 include_text = False
             MatrixMessage.update_message(
                 room, event, external_url, timestamp, event_replace, include_text
