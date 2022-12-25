@@ -5,3 +5,4 @@ Wand
 python-magic
 peewee
 python-dateutil
+wordcloud

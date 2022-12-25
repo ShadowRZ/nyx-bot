@@ -16,6 +16,7 @@ dependencies = [
     "python-magic",
     "peewee",
     "python-dateutil",
+    "wordcloud",
 ]
 classifiers=[
     "License :: OSI Approved :: Apache Software License",
