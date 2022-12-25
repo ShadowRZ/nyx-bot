@@ -106,6 +106,17 @@ pip install -e ".[postgres]"
 
 [Sarasa Gothic](https://github.com/be5invis/Sarasa-Gothic) should be installed for best quote image results. It is also recommanded to install the Noto Color Emoji font on the machine running the bot.
 
+## Build word segmenter
+
+Use Rust to build the segmenter:
+
+```
+cd cutword
+cargo build --release
+```
+
+Copy the `target/release/nyx_bot-cutword` to a `PATH` avaliable to the bot.
+
 ## Configuration
 
 Copy the sample configuration file to a new `config.yaml` file.

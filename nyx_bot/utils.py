@@ -1,5 +1,6 @@
 from datetime import datetime
-from io import BytesIO
+from html.parser import HTMLParser
+from io import BytesIO, StringIO
 from random import Random
 from typing import Optional
 from urllib.parse import unquote, urlparse
@@ -213,3 +214,24 @@ def make_divergence(room: MatrixRoom):
         result = first_value
 
     return result
+
+
+class MLStripper(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs = True
+        self.text = StringIO()
+
+    def handle_data(self, d):
+        self.text.write(d)
+
+    def get_data(self):
+        return self.text.getvalue()
+
+
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
