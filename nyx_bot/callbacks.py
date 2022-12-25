@@ -39,6 +39,7 @@ class Callbacks:
         self.config = config
         self.disable_jerryxiao_for = config.disable_jerryxiao_for
         self.disable_randomdraw_for = config.disable_randomdraw_for
+        self.record_message_content_for = config.record_mesaage_content_for
         self.command_prefix = config.command_prefix
         self.replace_map = {}
 
@@ -51,11 +52,6 @@ class Callbacks:
             event: The event defining the message.
         """
         event_replace = get_replaces(event)
-        timestamp = make_datetime(event.server_timestamp)
-        external_url = get_external_url(event)
-        MatrixMessage.update_message(
-            room, event, external_url, timestamp, event_replace
-        )
         # Ignore too old messages
         current_time = int(time.time() * 1000)
         if current_time - event.server_timestamp > 60000:
@@ -87,6 +83,14 @@ class Callbacks:
         # room.member_count > 2 ... we assume a public room
         # room.member_count <= 2 ... we assume a DM
         if not has_command_prefix and room.member_count > 2:
+            # Record this message.
+            timestamp = make_datetime(event.server_timestamp)
+            external_url = get_external_url(event)
+            if room.room_id in self.record_message_content_for:
+                include_text = False
+            MatrixMessage.update_message(
+                room, event, external_url, timestamp, event_replace, include_text
+            )
             # General message listener
             message = Message(
                 self.client,

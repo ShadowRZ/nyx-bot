@@ -58,3 +58,7 @@ disable_jerryxiao_for:
 
 disable_randomdraw_for:
   - '!XXXXXXXXXXXXXXXXXX:example.com'
+
+# Record message content for the following rooms
+record_message_content_for:
+  - '!XXXXXXXXXXXXXXXXXX:example.com'

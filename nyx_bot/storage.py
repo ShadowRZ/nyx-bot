@@ -39,6 +39,7 @@ class MatrixMessage(Model):
         external_url: Optional[str],
         timestamp: datetime,
         event_replace: Optional[str] = None,
+        include_text: Optional[str] = False,
     ):
         message_db_item = MatrixMessage.get_or_none(
             (MatrixMessage.room_id == room.room_id)
@@ -48,8 +49,9 @@ class MatrixMessage(Model):
             message_db_item = MatrixMessage()
         message_db_item.room_id = room.room_id
         message_db_item.event_id = event.event_id
-        message_db_item.body = event.body
-        message_db_item.formatted_body = event.formatted_body
+        if include_text:
+            message_db_item.body = event.body
+            message_db_item.formatted_body = event.formatted_body
         message_db_item.origin_server_ts = event.server_timestamp
         message_db_item.external_url = external_url
         message_db_item.sender = event.sender

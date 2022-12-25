@@ -110,6 +110,9 @@ class Config:
 
         self.disable_jerryxiao_for = self._get_cfg(["disable_jerryxiao_for"], [])
         self.disable_randomdraw_for = self._get_cfg(["disable_randomdraw_for"], [])
+        self.record_message_content_for = self._get_cfg(
+            ["record_message_content_for"], []
+        )
         self.encryption = self._get_cfg(["encryption"], False)
 
     def _get_cfg(
