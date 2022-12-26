@@ -117,6 +117,8 @@ cargo build --release
 
 Copy the `target/release/nyx_bot-cutword` to a `PATH` avaliable to the bot.
 
+You can also use the Python one located in `cutword/nyx_bot-cutword.py`.
+
 ## Configuration
 
 Copy the sample configuration file to a new `config.yaml` file.
