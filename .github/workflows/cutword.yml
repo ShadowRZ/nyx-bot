@@ -1,7 +1,9 @@
 on:
   push:
     paths:
-      - 'cutword/**'
+      - 'cutword/Cargo.lock'
+      - 'cutword/Cargo.toml'
+      - 'cutword/src/**'
 
 name: Prebuild word segmenter
 
