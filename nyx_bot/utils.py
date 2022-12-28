@@ -1,8 +1,9 @@
+import math
 from datetime import datetime
 from html.parser import HTMLParser
 from io import BytesIO, StringIO
 from random import Random
-from typing import Optional
+from typing import Optional, Tuple
 from urllib.parse import unquote, urlparse
 from zlib import crc32
 
@@ -235,3 +236,37 @@ def strip_tags(html):
     s = MLStripper()
     s.feed(html)
     return s.get_data()
+
+
+async def parse_wordcloud_args(
+    args,
+    client: AsyncClient,
+    room: MatrixRoom,
+    event: RoomMessageText,
+    reply_to: Optional[str],
+) -> Tuple[Optional[str], Optional[int]]:
+    sender = None
+    days = None
+    if not reply_to:
+        sender = event.sender
+    else:
+        target_event = await client.room_get_event(room.room_id, reply_to)
+        if isinstance(target_event, RoomGetEventError):
+            error = target_event.message
+            raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
+        sender = target_event.event.sender
+    if args:
+        if args[0] != "all":
+            try:
+                days = float(args[0])
+                if math.isnan(days) or math.isinf(days):
+                    raise ValueError
+            except ValueError:
+                raise NyxBotRuntimeError("The day argument given is not vaild.")
+            else:
+                if (len(args) >= 2) and (args[1] == "all"):
+                    sender = None
+                else:
+                    raise NyxBotRuntimeError("Argument is not valid.")
+
+    return (sender, days)

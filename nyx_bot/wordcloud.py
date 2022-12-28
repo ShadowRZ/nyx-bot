@@ -4,13 +4,16 @@ import os
 import re
 from asyncio import create_subprocess_exec
 from asyncio.subprocess import PIPE
+from datetime import datetime, timedelta
 from io import BytesIO, StringIO
+from typing import Optional, Set, Tuple
 
 from nio import AsyncClient, MatrixRoom, RoomMessageText, UploadResponse
 from wand.image import Image
 from wordcloud import WordCloud
 
 import nyx_bot
+from nyx_bot.chat_functions import send_text_to_room
 from nyx_bot.storage import MatrixMessage
 from nyx_bot.utils import strip_tags
 
@@ -54,10 +57,26 @@ async def send_wordcloud(
     client: AsyncClient,
     room: MatrixRoom,
     event: RoomMessageText,
-    sender: str,
+    sender: Optional[str],
+    days: Optional[int],
 ):
     bytesio = BytesIO()
-    texts = gather_messages(room, sender)
+    start_date = datetime.now()
+    end_date = None
+    if days is not None:
+        end_date = start_date - timedelta(days=days)
+    (texts, count, users) = gather_messages(room, sender, end_date)
+    if count == 0:
+        await send_text_to_room(
+            client,
+            room.room_id,
+            "No message was found.",
+            notice=False,
+            markdown_convert=False,
+            reply_to_event_id=event.event_id,
+            literal_text=True,
+        )
+        return
     freqs = await get_word_freqs(texts)
 
     loop = asyncio.get_running_loop()
@@ -106,7 +125,12 @@ async def send_wordcloud(
     # Add custom data for tracking bot message.
     content["io.github.shadowrz.nyx_bot"] = {
         "in_reply_to": event.event_id,
-        "type": "image",
+        "type": "wordcloud",
+        "state_key": sender,
+        "count": count,
+        "start_date": start_date.isoformat(sep=" "),
+        "end_date": end_date.isoformat(sep=" ") if end_date is not None else None,
+        "contained_senders": list(users),
     }
 
     await client.room_send(room.room_id, message_type="m.room.message", content=content)
@@ -114,17 +138,31 @@ async def send_wordcloud(
 
 def gather_messages(
     room: MatrixRoom,
-    sender: str,
-):
+    sender: Optional[str],
+    end_date: Optional[datetime],
+) -> Tuple[str, int, Set[str]]:
     stringio = StringIO()
-    msg_items = (
-        MatrixMessage.select()
-        .where(
-            (MatrixMessage.room_id == room.room_id) & (MatrixMessage.sender == sender)
+    count = 0
+    if sender is None:
+        msg_items = (
+            MatrixMessage.select()
+            .where(MatrixMessage.room_id == room.room_id)
+            .order_by(MatrixMessage.origin_server_ts.desc())
         )
-        .order_by(MatrixMessage.origin_server_ts.desc())
-    )
+    else:
+        msg_items = (
+            MatrixMessage.select()
+            .where(
+                (MatrixMessage.room_id == room.room_id)
+                & (MatrixMessage.sender == sender)
+            )
+            .order_by(MatrixMessage.origin_server_ts.desc())
+        )
+    users = set()
     for msg_item in msg_items:
+        if end_date is not None:
+            if msg_item.datetime < end_date:
+                break
         if msg_item.formatted_body is not None:
             string = re.sub(r"<mx-reply>.*</mx-reply>", "", msg_item.formatted_body)
             print(strip_tags(string), file=stringio)
@@ -133,5 +171,8 @@ def gather_messages(
         else:
             continue
 
+        count += 1
+        users.add(msg_item.sender)
+
     ret = stringio.getvalue()
-    return ret
+    return (ret, count, users)

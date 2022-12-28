@@ -23,7 +23,7 @@ from nyx_bot.chat_functions import (
 from nyx_bot.config import Config
 from nyx_bot.errors import NyxBotRuntimeError, NyxBotValueError
 from nyx_bot.storage import MatrixMessage, MembershipUpdates, UserTag
-from nyx_bot.utils import make_divergence, parse_matrixdotto_link
+from nyx_bot.utils import make_divergence, parse_matrixdotto_link, parse_wordcloud_args
 from nyx_bot.wordcloud import send_wordcloud
 
 logger = logging.getLogger(__name__)
@@ -541,16 +541,9 @@ Outside of a reply, send the avatar of the command sender.\
         UserTag.delete_user_tag(self.room.room_id, sender)
 
     async def _wordcloud(self):
-        if not self.reply_to:
-            sender = self.event.sender
-        else:
-            target_event = await self.client.room_get_event(
-                self.room.room_id, self.reply_to
-            )
-            if isinstance(target_event, RoomGetEventError):
-                error = target_event.message
-                raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
-            sender = target_event.event.sender
         await self.client.room_typing(self.room.room_id)
-        await send_wordcloud(self.client, self.room, self.event, sender)
+        (sender, days) = await parse_wordcloud_args(
+            self.args, self.client, self.room, self.event, self.reply_to
+        )
+        await send_wordcloud(self.client, self.room, self.event, sender, days)
         await self.client.room_typing(self.room.room_id, False)
