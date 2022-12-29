@@ -256,7 +256,9 @@ async def parse_wordcloud_args(
             raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
         sender = target_event.event.sender
     if args:
-        if args[0] != "all":
+        if args[0] == "all":
+            sender = None
+        else:
             try:
                 days = float(args[0])
                 if math.isnan(days) or math.isinf(days):
