@@ -425,7 +425,7 @@ Outside of a reply, send the avatar of the command sender.\
         if isinstance(target_response, RoomGetEventError):
             error = target_response.message
             raise NyxBotRuntimeError(f"Failed to fetch event: {error}")
-        target_event = target_response.nse.event
+        target_event = target_response.event
         if isinstance(target_event, RoomMessageImage):
             content = target_event.source.get("content")
             info = content["info"]
