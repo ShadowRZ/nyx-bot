@@ -3,7 +3,7 @@ from datetime import datetime
 from html.parser import HTMLParser
 from io import BytesIO, StringIO
 from random import Random
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 from urllib.parse import unquote, urlparse
 from zlib import crc32
 
@@ -56,7 +56,7 @@ async def get_body(
 
 
 async def get_formatted_body(
-    client: AsyncClient, room: MatrixRoom, event_id: str, replace_map: str
+    client: AsyncClient, room: MatrixRoom, event_id: str, replace_map: Dict[str, str]
 ) -> Optional[str]:
     if event_id not in replace_map:
         target_response = await client.room_get_event(room.room_id, event_id)
@@ -143,12 +143,12 @@ def parse_matrixdotto_link(link: str):
             # Named Room
             type_ = "room_named"
             identifier = f"#{parsed.fragment}"
-        return (type_, identifier, None)
+        return type_, identifier, None
     elif len(paths) == 3:
         # Must be an event ID
         room = unquote(paths[1])
         event_id = unquote(paths[2])
-        return ("event", room, event_id)
+        return "event", room, event_id
 
 
 async def make_single_quote_image(
@@ -271,4 +271,16 @@ async def parse_wordcloud_args(
                 else:
                     raise NyxBotRuntimeError("Argument is not valid.")
 
-    return (sender, days)
+    return sender, days
+
+
+def should_record_message_content(room_features, room_id: str) -> bool:
+    return room_features[room_id]["record_messages"]
+
+
+def should_enable_jerryxiao(room_features, room_id: str) -> bool:
+    return room_features[room_id]["jerryxiao"]
+
+
+def should_enable_randomdraw(room_features, room_id: str) -> bool:
+    return room_features[room_id]["randomdraw"]

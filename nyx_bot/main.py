@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import asyncio
 import logging
 import os.path
 import sys
@@ -44,7 +43,7 @@ async def main():
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
     else:
-        config_path = "config.yaml"
+        config_path = "nyx_bot.toml"
 
     # Read the parsed config file and create a Config object
     config = Config(config_path)
@@ -140,7 +139,3 @@ async def main():
         finally:
             # Make sure to close the client connection on disconnect
             await client.close()
-
-
-# Run the main function in an asyncio event loop
-asyncio.get_event_loop().run_until_complete(main())

@@ -20,7 +20,7 @@ build/
 dist/
 
 # Config file
-config.yaml
+nyx_bot.toml
 
 # Log files
 *.log

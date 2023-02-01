@@ -8,6 +8,7 @@ from nyx_bot.chat_functions import gen_result_randomdraw, send_text_to_room
 from nyx_bot.config import Config
 from nyx_bot.jerryxiao import send_jerryxiao
 from nyx_bot.trpg_dicer import get_trpg_dice_result
+from nyx_bot.utils import should_enable_jerryxiao, should_enable_randomdraw
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +22,7 @@ class Message:
         room: MatrixRoom,
         event: RoomMessageText,
         reply_to: str,
-        disable_jerryxiao_for,
-        disable_randomdraw_for,
+        room_features,
     ):
         """Initialize a new Message
 
@@ -43,8 +43,7 @@ class Message:
         self.room = room
         self.event = event
         self.reply_to = reply_to
-        self.disable_jerryxiao_for = disable_jerryxiao_for
-        self.disable_randomdraw_for = disable_randomdraw_for
+        self.room_features = room_features
 
     async def process(self) -> None:
         """Process and possibly respond to the message"""
@@ -61,7 +60,7 @@ class Message:
             await self._trpg_dicer(query)
 
     async def _randomdraw(self, query: str, prob: bool) -> None:
-        if self.room.room_id in self.disable_randomdraw_for:
+        if not should_enable_randomdraw(self.room_features, self.room.room_id):
             return
         sender = self.event.sender
         msg = gen_result_randomdraw(
@@ -95,7 +94,7 @@ class Message:
 
     async def _jerryxiao(self) -> None:
         """Performs features similar to the bot created by Jerry Xiao"""
-        if self.room.room_id in self.disable_jerryxiao_for:
+        if not should_enable_jerryxiao(self.room_features, self.room.room_id):
             return
         msg = self.message_content
 

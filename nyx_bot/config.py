@@ -2,13 +2,17 @@ import logging
 import os
 import re
 import sys
+from collections import defaultdict
 from typing import Any, List, Optional
 
-import yaml
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 from nyx_bot.errors import ConfigError
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 logging.getLogger("peewee").setLevel(
     logging.INFO
 )  # Prevent debug messages from peewee lib
@@ -24,7 +28,7 @@ class Config:
 
         # Load in the config file at the given filepath
         with open(filepath) as file_stream:
-            self.config_dict = yaml.safe_load(file_stream.read())
+            self.config_dict = tomllib.loads(file_stream.read())
 
         # Parse and validate config options
         self._parse_config_values()
@@ -108,15 +112,29 @@ class Config:
 
         self.command_prefix = self._get_cfg(["command_prefix"], default="!c") + " "
 
-        self.disable_jerryxiao_for = self._get_cfg(
-            ["disable_jerryxiao_for"], [], required=False
-        )
-        self.disable_randomdraw_for = self._get_cfg(
-            ["disable_randomdraw_for"], [], required=False
-        )
-        self.record_message_content_for = self._get_cfg(
-            ["record_message_content_for"], [], required=False
-        )
+        room_features_dict = self._get_cfg(["room_features"])
+        room_features_default = {
+            "jerryxiao": False,
+            "randomdraw": False,
+            "record_messages": False,
+        }
+        if "jerryxiao" in room_features_dict:
+            room_features_default["jerryxiao"] = room_features_dict["jerryxiao"]
+            del room_features_dict["jerryxiao"]
+        if "randomdraw" in room_features_dict:
+            room_features_default["randomdraw"] = room_features_dict["randomdraw"]
+            del room_features_dict["randomdraw"]
+        if "record_messages" in room_features_dict:
+            room_features_default["record_messages"] = room_features_dict[
+                "record_messages"
+            ]
+            del room_features_dict["record_messages"]
+        self.room_features = defaultdict(lambda: room_features_default)
+        for k, v in room_features_dict.items():
+            if isinstance(v, dict):
+                features_override = v
+                self.room_features[k] = room_features_default | features_override
+
         self.encryption = self._get_cfg(["encryption"], False, required=False)
 
     def _get_cfg(

@@ -22,6 +22,7 @@ from nyx_bot.utils import (
     get_reply_to,
     is_bot_event,
     make_datetime,
+    should_record_message_content,
     strip_beginning_quote,
 )
 
@@ -38,9 +39,7 @@ class Callbacks:
         """
         self.client = client
         self.config = config
-        self.disable_jerryxiao_for = config.disable_jerryxiao_for
-        self.disable_randomdraw_for = config.disable_randomdraw_for
-        self.record_message_content_for = config.record_message_content_for
+        self.room_features = config.room_features
         self.command_prefix = config.command_prefix
         self.replace_map = {}
 
@@ -71,7 +70,7 @@ class Callbacks:
                 # Record this message.
                 timestamp = make_datetime(event.server_timestamp)
                 external_url = get_external_url(event)
-                if room.room_id not in self.record_message_content_for:
+                if not should_record_message_content(self.room_features, room.room_id):
                     include_text = False
                 MatrixMessage.update_message(
                     room, event, external_url, timestamp, event_replace, include_text
@@ -98,21 +97,14 @@ class Callbacks:
             # Record this message.
             timestamp = make_datetime(event.server_timestamp)
             external_url = get_external_url(event)
-            if room.room_id not in self.record_message_content_for:
+            if not should_record_message_content(self.room_features, room.room_id):
                 include_text = False
             MatrixMessage.update_message(
                 room, event, external_url, timestamp, event_replace, include_text
             )
             # General message listener
             message = Message(
-                self.client,
-                self.config,
-                msg,
-                room,
-                event,
-                reply_to,
-                self.disable_jerryxiao_for,
-                self.disable_randomdraw_for,
+                self.client, self.config, msg, room, event, reply_to, self.room_features
             )
             try:
                 await message.process()

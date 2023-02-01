@@ -43,7 +43,7 @@ You can install [libolm](https://gitlab.matrix.org/matrix-org/olm) from source,
 or alternatively, check your system's package manager. Version `3.0.0` or
 greater is required.
 
-**(Optional) postgres development headers**
+#### (Optional) postgres development headers
 
 By default, the bot uses SQLite as its storage backend. This is fine for a few
 hundred users, but if you plan to support a much higher volume of requests, you
@@ -100,6 +100,8 @@ command to install postgres dependencies alongside those that are necessary:
 
 ```
 pip install -e ".[postgres]"
+# Using requirements.txt
+pip install -r requirements-postgres.txt
 ```
 
 ## Install fonts
@@ -121,30 +123,30 @@ You can also use the Python one located in `cutword/nyx_bot-cutword.py`.
 
 ## Configuration
 
-Copy the sample configuration file to a new `config.yaml` file.
+Copy the sample configuration file to a new `nyx_bot.toml` file.
 
 ```
-cp sample.config.yaml config.yaml
+cp sample.config.toml nyx_bot.toml
 ```
 
 Edit the config file. The `matrix` section must be modified at least.
 
-#### (Optional) Set up a Postgres database
+### (Optional) Set up a Postgres database
 
-Create a postgres user and database for matrix-reminder-bot:
+Create a postgres user and database for it:
 
 ```
-sudo -u postgresql psql createuser nio-template -W  # prompts for a password
-sudo -u postgresql psql createdb -O nio-template nio-template
+sudo -u postgresql psql createuser nyx_bot -W  # prompts for a password
+sudo -u postgresql psql createdb -O nyx_bot nyx_bot
 ```
 
 Edit the `storage.database` config option, replacing the `sqlite://...` string with `postgres://...`. The syntax is:
 
 ```
-database: "postgres://username:password@localhost/dbname?sslmode=disable"
+database = "postgres://username:password@localhost/dbname?sslmode=disable"
 ```
 
-See also the comments in `sample.config.yaml`.
+See also the comments in `sample.config.toml`.
 
 ## Running
 
@@ -171,11 +173,11 @@ it comes time to modifying the code for your own purposes, you are expected to
 replace every instance of "nyx-bot" and its variances with your own
 project's name.
 
-By default, the bot will run with the config file at `./config.yaml`. However, an
+By default, the bot will run with the config file at `./nyx_bot.toml`. However, an
 alternative relative or absolute filepath can be specified after the command:
 
 ```
-nyx-bot other-config.yaml
+nyx-bot other-config.toml
 ```
 
 ## Final steps
