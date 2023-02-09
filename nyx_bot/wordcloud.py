@@ -163,10 +163,15 @@ def gather_messages(
         if end_date is not None:
             if msg_item.datetime < end_date:
                 break
-        if msg_item.sender == "@variation:matrix.org":  # XXX: Special case for Arch Linux CN
+        if (
+            msg_item.sender == "@variation:matrix.org"
+        ):  # XXX: Special case for Arch Linux CN
             continue
         if msg_item.formatted_body is not None:
-            fwd_match = re.match(r'Forwarded message from channel .*<tg-forward>(.*)</tg-forward>', msg_item.formatted_body)
+            fwd_match = re.match(
+                r"Forwarded message from channel .*<tg-forward>(.*)</tg-forward>",
+                msg_item.formatted_body,
+            )
             if fwd_match is not None:
                 string = re.sub(r"<mx-reply>.*</mx-reply>", "", fwd_match.group(1))
             else:
@@ -176,7 +181,9 @@ def gather_messages(
             # XXX: Special case for Arch Linux CN
             if msg_item.sender == "@matterbridge:nichi.co":
                 # https://www.rfc-editor.org/rfc/rfc1459
-                data = re.sub(r'\[[A-Za-z][A-Za-z0-9\-\[\]\\\`\^\{\}]*\]', "", msg_item.body)
+                data = re.sub(
+                    r"\[[A-Za-z][A-Za-z0-9\-\[\]\\\`\^\{\}]*\]", "", msg_item.body
+                )
                 print(data.strip(), file=stringio)
             else:
                 print(msg_item.body, file=stringio)
