@@ -12,7 +12,7 @@ except ModuleNotFoundError:
 
 from nyx_bot.errors import ConfigError
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 logging.getLogger("peewee").setLevel(
     logging.INFO
 )  # Prevent debug messages from peewee lib

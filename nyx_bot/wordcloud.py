@@ -169,7 +169,7 @@ def gather_messages(
             continue
         if msg_item.formatted_body is not None:
             fwd_match = re.match(
-                r"Forwarded message from channel .*<tg-forward>(.*)</tg-forward>",
+                r"Forwarded message from .*<tg-forward>(.*)</tg-forward>",
                 msg_item.formatted_body,
             )
             if fwd_match is not None:
