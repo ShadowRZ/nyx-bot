@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import sys
-
-from jieba import posseg
 from collections import defaultdict
+
+import jieba
+from jieba import posseg
 
 STOP_FLAGS = [
     "d",  # 副词
@@ -26,7 +27,21 @@ STOP_FLAGS = [
     "ud",
 ]
 
+try:
+    jieba.load_userdict("userdict.txt")
+except:  # noqa: E722
+    pass
+
 result = defaultdict(int)
+
+stopwords = set()
+
+try:
+    with open("StopWords-simple.txt") as f:
+        for line in f:
+            stopwords.add(line.strip())
+except:  # noqa: E722
+    pass
 
 for line in sys.stdin:
     if line.startswith("/"):
@@ -36,6 +51,8 @@ for line in sys.stdin:
 
     for word, flag in words:
         if flag in STOP_FLAGS:
+            continue
+        if word.lower() in stopwords:
             continue
         result[word.lower()] += 1
 
