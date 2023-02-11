@@ -181,9 +181,7 @@ def gather_messages(
             # XXX: Special case for Arch Linux CN
             if msg_item.sender == "@matterbridge:nichi.co":
                 # https://www.rfc-editor.org/rfc/rfc1459
-                data = re.sub(
-                    r"\[[A-Za-z][A-Za-z0-9\-\[\]\\\`\^\{\}]*\]", "", msg_item.body
-                )
+                data = re.sub(r"^\[.*\] ", "", msg_item.body)
                 print(data.strip(), file=stringio)
             else:
                 print(msg_item.body, file=stringio)
