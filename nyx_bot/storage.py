@@ -17,6 +17,7 @@ from peewee import (
 )
 
 from nyx_bot.errors import NyxBotRuntimeError
+from nyx_bot.utils import get_external_url, make_datetime
 
 
 class MatrixMessage(Model):
@@ -36,11 +37,11 @@ class MatrixMessage(Model):
     def update_message(
         room: MatrixRoom,
         event: RoomMessageText,
-        external_url: Optional[str],
-        timestamp: datetime,
         event_replace: Optional[str] = None,
         include_text: Optional[bool] = False,
     ):
+        timestamp = make_datetime(event.server_timestamp)
+        external_url = get_external_url(event)
         message_db_item = MatrixMessage.get_or_none(
             (MatrixMessage.room_id == room.room_id)
             & (MatrixMessage.event_id == event.event_id)

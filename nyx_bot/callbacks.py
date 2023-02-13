@@ -17,7 +17,6 @@ from nyx_bot.config import Config
 from nyx_bot.message_responses import Message
 from nyx_bot.storage import MatrixMessage, MembershipUpdates
 from nyx_bot.utils import (
-    get_external_url,
     get_replaces,
     get_reply_to,
     is_bot_event,
@@ -67,14 +66,9 @@ class Callbacks:
         if event.sender == self.client.user:
             if not is_bot_event(event):
                 include_text = True
-                # Record this message.
-                timestamp = make_datetime(event.server_timestamp)
-                external_url = get_external_url(event)
                 if not should_record_message_content(self.room_features, room.room_id):
                     include_text = False
-                MatrixMessage.update_message(
-                    room, event, external_url, timestamp, event_replace, include_text
-                )
+                MatrixMessage.update_message(room, event, event_replace, include_text)
             return
 
         logger.debug(
@@ -95,13 +89,9 @@ class Callbacks:
         if not has_command_prefix and room.member_count > 2:
             include_text = True
             # Record this message.
-            timestamp = make_datetime(event.server_timestamp)
-            external_url = get_external_url(event)
             if not should_record_message_content(self.room_features, room.room_id):
                 include_text = False
-            MatrixMessage.update_message(
-                room, event, external_url, timestamp, event_replace, include_text
-            )
+            MatrixMessage.update_message(room, event, event_replace, include_text)
             # General message listener
             message = Message(
                 self.client, self.config, msg, room, event, reply_to, self.room_features

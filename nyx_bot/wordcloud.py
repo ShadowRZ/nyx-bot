@@ -136,6 +136,9 @@ async def send_wordcloud(
     await client.room_send(room.room_id, message_type="m.room.message", content=content)
 
 
+DROP_USERS = {"@telegram_1454289754:nichi.co", "@matterbridge:nichi.co"}
+
+
 def gather_messages(
     room: MatrixRoom,
     sender: Optional[str],
@@ -163,9 +166,7 @@ def gather_messages(
         if end_date is not None:
             if msg_item.datetime < end_date:
                 break
-        if (
-            msg_item.sender == "@variation:matrix.org"
-        ):  # XXX: Special case for Arch Linux CN
+        if msg_item.sender in DROP_USERS:  # XXX: Special case for Arch Linux CN
             continue
         if msg_item.formatted_body is not None:
             fwd_match = re.match(
@@ -180,7 +181,6 @@ def gather_messages(
         elif msg_item.body is not None:
             # XXX: Special case for Arch Linux CN
             if msg_item.sender == "@matterbridge:nichi.co":
-                # https://www.rfc-editor.org/rfc/rfc1459
                 data = re.sub(r"^\[.*\] ", "", msg_item.body)
                 print(data.strip(), file=stringio)
             else:
