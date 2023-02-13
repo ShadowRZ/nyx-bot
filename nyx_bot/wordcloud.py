@@ -169,14 +169,13 @@ def gather_messages(
         if msg_item.sender in DROP_USERS:  # XXX: Special case for Arch Linux CN
             continue
         if msg_item.formatted_body is not None:
+            string = re.sub(r"<mx-reply>.*</mx-reply>", "", msg_item.formatted_body)
             fwd_match = re.match(
                 r"Forwarded message from .*<tg-forward>(.*)</tg-forward>",
-                msg_item.formatted_body,
+                string,
             )
             if fwd_match is not None:
-                string = re.sub(r"<mx-reply>.*</mx-reply>", "", fwd_match.group(1))
-            else:
-                string = re.sub(r"<mx-reply>.*</mx-reply>", "", msg_item.formatted_body)
+                string = fwd_match.group(1)
             print(strip_tags(string), file=stringio)
         elif msg_item.body is not None:
             # XXX: Special case for Arch Linux CN
