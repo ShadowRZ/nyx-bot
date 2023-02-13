@@ -1,26 +1,15 @@
 import math
 from datetime import datetime
 from html.parser import HTMLParser
-from io import BytesIO, StringIO
+from io import StringIO
 from random import Random
 from typing import Dict, Optional, Tuple
 from urllib.parse import unquote, urlparse
 from zlib import crc32
 
-from nio import (
-    AsyncClient,
-    DownloadError,
-    Event,
-    MatrixRoom,
-    RoomGetEventError,
-    RoomMessageText,
-)
-from wand.image import Image
+from nio import AsyncClient, Event, MatrixRoom, RoomGetEventError, RoomMessageText
 
 from nyx_bot.errors import NyxBotRuntimeError
-from nyx_bot.parsers import MatrixHTMLParser
-from nyx_bot.quote_image import make_quote_image
-from nyx_bot.storage import UserTag
 
 
 def user_name(room: MatrixRoom, user_id: str) -> Optional[str]:
@@ -149,58 +138,6 @@ def parse_matrixdotto_link(link: str):
         room = unquote(paths[1])
         event_id = unquote(paths[2])
         return "event", room, event_id
-
-
-async def make_single_quote_image(
-    client: AsyncClient,
-    room: MatrixRoom,
-    target_event: RoomMessageText,
-    replace_map: dict,
-    show_user: bool = True,
-) -> Image:
-    sender = target_event.sender
-    body = ""
-    formatted = True
-    formatted_body = await get_formatted_body(
-        client, room, target_event.event_id, replace_map
-    )
-    if not formatted_body:
-        formatted = False
-    if formatted:
-        parser = MatrixHTMLParser()
-        parser.feed(formatted_body)
-        body = parser.into_pango_markup()
-    else:
-        body = await get_body(client, room.room_id, target_event.event_id, replace_map)
-        if get_reply_to(target_event):
-            body = strip_beginning_quote(body)
-        if len(body) > 1000:
-            body_stripped = body[:1000]
-            body = f"{body_stripped}..."
-    sender_name = user_name(room, sender)
-    sender_avatar = room.avatar_url(sender)
-    image = None
-    if show_user:
-        if sender_avatar:
-            avatar_resp = await client.download(mxc=sender_avatar)
-            if isinstance(avatar_resp, DownloadError):
-                error = avatar_resp.message
-                raise NyxBotRuntimeError(f"Failed to download {sender_avatar}: {error}")
-            data = avatar_resp.body
-            bytesio = BytesIO(data)
-            image = Image(file=bytesio)
-        else:
-            image = Image(width=64, height=64, background="#FFFF00")
-    else:
-        sender_name = None
-    user_tag = UserTag.get_or_none(
-        (UserTag.room_id == room.room_id) & (UserTag.sender == sender)
-    )
-    tag_name = None
-    if user_tag:
-        tag_name = f"#{user_tag.tag}"
-    quote_image = await make_quote_image(sender_name, body, image, formatted, tag_name)
-    return quote_image
 
 
 def make_divergence(room: MatrixRoom):

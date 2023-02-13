@@ -28,13 +28,13 @@ from wand.image import Image
 
 from nyx_bot.errors import NyxBotRuntimeError, NyxBotValueError
 from nyx_bot.multiquote import make_multiquote_image
+from nyx_bot.quote_image import make_single_quote_image
 from nyx_bot.storage import MatrixMessage
 from nyx_bot.utils import (
     get_body,
     get_external_url,
     get_replaces,
     make_datetime,
-    make_single_quote_image,
     strip_beginning_quote,
     user_name,
 )

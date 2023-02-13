@@ -2,7 +2,8 @@ from nio import AsyncClient, MatrixRoom, RoomMessageText
 from wand.drawing import Drawing
 from wand.image import Image
 
-from nyx_bot.utils import get_replaces, make_single_quote_image, strip_beginning_quote
+from nyx_bot.quote_image import make_single_quote_image
+from nyx_bot.utils import get_replaces, strip_beginning_quote
 
 
 async def make_multiquote_image(
