@@ -15,7 +15,7 @@ from wordcloud import WordCloud
 import nyx_bot
 from nyx_bot.chat_functions import send_text_to_room
 from nyx_bot.storage import MatrixMessage
-from nyx_bot.utils import strip_tags
+from nyx_bot.utils import strip_tags, strip_urls
 
 CUTWORDS_EXE = "nyx_bot-cutword"
 FONT = os.path.join(nyx_bot.__path__[0], "wordcloud_font.ttf")
@@ -136,7 +136,7 @@ async def send_wordcloud(
     await client.room_send(room.room_id, message_type="m.room.message", content=content)
 
 
-DROP_USERS = {"@telegram_1454289754:nichi.co", "@matterbridge:nichi.co"}
+DROP_USERS = {"@telegram_1454289754:nichi.co", "@variation:matrix.org", "@bot:bgme.me"}
 
 
 def gather_messages(
@@ -176,14 +176,14 @@ def gather_messages(
             )
             if fwd_match is not None:
                 string = fwd_match.group(1)
-            print(strip_tags(string), file=stringio)
+            print(strip_urls(strip_tags(string)), file=stringio)
         elif msg_item.body is not None:
             # XXX: Special case for Arch Linux CN
             if msg_item.sender == "@matterbridge:nichi.co":
                 data = re.sub(r"^\[.*\] ", "", msg_item.body)
-                print(data.strip(), file=stringio)
+                print(strip_tags(data.strip()), file=stringio)
             else:
-                print(msg_item.body, file=stringio)
+                print(strip_urls(msg_item.body), file=stringio)
         else:
             continue
 

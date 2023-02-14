@@ -1,4 +1,5 @@
 import math
+import re
 from datetime import datetime
 from html.parser import HTMLParser
 from io import StringIO
@@ -213,6 +214,13 @@ async def parse_wordcloud_args(
                     raise NyxBotRuntimeError("Argument is not valid.")
 
     return sender, days
+
+
+RE_DATA = r"""(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))"""
+
+
+def strip_urls(input: str) -> str:
+    return re.sub(RE_DATA, "", input)
 
 
 def should_record_message_content(room_features, room_id: str) -> bool:
