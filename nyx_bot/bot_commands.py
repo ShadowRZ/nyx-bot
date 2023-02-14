@@ -24,14 +24,7 @@ from nyx_bot.chat_functions import (
 from nyx_bot.config import Config
 from nyx_bot.errors import NyxBotRuntimeError, NyxBotValueError
 from nyx_bot.storage import MatrixMessage, MembershipUpdates, UserTag
-from nyx_bot.utils import (
-    get_body,
-    get_reply_to,
-    make_divergence,
-    parse_matrixdotto_link,
-    parse_wordcloud_args,
-    strip_beginning_quote,
-)
+from nyx_bot.utils import make_divergence, parse_matrixdotto_link, parse_wordcloud_args
 from nyx_bot.wordcloud import send_wordcloud
 
 logger = logging.getLogger(__name__)
@@ -308,15 +301,11 @@ class Command:
         )
 
     async def _divergence(self):
-        rehash = 0
+        room_hash = crc32(self.room.room_id.encode())
+        event_id_hash = None
         if self.reply_to:
-            body = await get_body(
-                self.client, self.room.room_id, self.event.event_id, self.replace_map
-            )
-            if get_reply_to(self.event):
-                body = strip_beginning_quote(body)
-            rehash += crc32(body.encode()) % 27
-        text = "%.6f%%" % make_divergence(self.room, rehash)
+            event_id_hash = crc32(self.reply_to.encode())
+        text = "%.6f%%" % make_divergence(room_hash, event_id_hash)
         await send_text_to_room(
             self.client,
             self.room.room_id,

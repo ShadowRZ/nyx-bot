@@ -5,7 +5,6 @@ from io import StringIO
 from random import Random
 from typing import Dict, Optional, Tuple
 from urllib.parse import unquote, urlparse
-from zlib import crc32
 
 from nio import AsyncClient, Event, MatrixRoom, RoomGetEventError, RoomMessageText
 
@@ -140,11 +139,14 @@ def parse_matrixdotto_link(link: str):
         return "event", room, event_id
 
 
-def make_divergence(room: MatrixRoom, rehash: int):
-    seed = crc32(room.room_id.encode())
-    for i in range(rehash):
-        seed += crc32(str(i).encode())
-    divergence = Random(seed)
+divergence = Random()
+
+
+def make_divergence(room_hash: int, event_id_hash: Optional[int] = None):
+    seed = room_hash
+    if event_id_hash:
+        seed += event_id_hash
+    divergence.seed(seed)
     first_value = divergence.gammavariate(1, 0.5)
     if first_value >= 2:
         result = first_value * divergence.random()
