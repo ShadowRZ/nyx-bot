@@ -1,4 +1,5 @@
 import logging
+import time
 from calendar import THURSDAY
 from datetime import date, datetime
 from zlib import crc32
@@ -25,7 +26,12 @@ from nyx_bot.chat_functions import (
 from nyx_bot.config import Config
 from nyx_bot.errors import NyxBotRuntimeError, NyxBotValueError
 from nyx_bot.storage import MatrixMessage, MembershipUpdates, UserTag
-from nyx_bot.utils import make_divergence, parse_matrixdotto_link, parse_wordcloud_args
+from nyx_bot.utils import (
+    make_datetime,
+    make_divergence,
+    parse_matrixdotto_link,
+    parse_wordcloud_args,
+)
 from nyx_bot.wordcloud import send_wordcloud
 
 logger = logging.getLogger(__name__)
@@ -121,6 +127,8 @@ class Command:
             await self._divergence()
         elif self.command == "wordcloud":
             await self._wordcloud()
+        elif self.command == "ping":
+            await self._ping()
         else:
             await self._unknown_command()
 
@@ -285,6 +293,20 @@ class Command:
             self.client,
             self.room.room_id,
             self.room.room_id,
+            notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
+
+    async def _ping(self):
+        event_ts = make_datetime(self.event.origin_server_ts)
+        now = time.time()
+        delta = now - event_ts.timestamp()
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            f"Pong after {delta} second",
             notice=False,
             markdown_convert=False,
             reply_to_event_id=self.event.event_id,
