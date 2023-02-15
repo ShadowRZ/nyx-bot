@@ -92,6 +92,9 @@ async def send_wordcloud(
     loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, make_image, freqs, bytesio)
 
+    st4 = time.time()
+    logger.info("Created picture using %.3f seconds", st4 - st3)
+
     length = bytesio.getbuffer().nbytes
     bytesio.seek(0)
 
@@ -144,6 +147,8 @@ async def send_wordcloud(
     }
 
     await client.room_send(room.room_id, message_type="m.room.message", content=content)
+    st5 = time.time()
+    logger.info("Sending message using %.3f seconds, done.", st5 - st4)
 
 
 DROP_USERS = {"@telegram_1454289754:nichi.co", "@variation:matrix.org", "@bot:bgme.me"}
@@ -187,6 +192,8 @@ def gather_messages(
             if fwd_match is not None:
                 string = fwd_match.group(1)
             print(strip_tags(string), file=stringio)
+            count += 1
+            users.add(msg_item.sender)
         elif msg_item.body is not None:
             # XXX: Special case for Arch Linux CN
             if msg_item.sender == "@matterbridge:nichi.co":
@@ -194,11 +201,10 @@ def gather_messages(
                 print(data.strip(), file=stringio)
             else:
                 print(msg_item.body, file=stringio)
+            count += 1
+            users.add(msg_item.sender)
         else:
             continue
-
-        count += 1
-        users.add(msg_item.sender)
 
     ret = stringio.getvalue()
     return (ret, count, users)
