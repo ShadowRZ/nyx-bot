@@ -57,17 +57,13 @@ fn main() -> Result<()> {
 }
 
 fn load_dict(jieba: &mut Jieba) -> Result<()> {
-    let file = BufReader::new(File::open("userdict.txt")?);
-    for line in file.lines() {
-        match line {
-            Ok(line) => {
-                let mut it = line.split_whitespace();
-                let word = it.next().ok_or_else(|| anyhow!("Bad line: {}", line))?;
-                let tag = Some(it.next().ok_or_else(|| anyhow!("Bad line: {}", line))?);
-                jieba.add_word(word, None, tag);
-            }
-            Err(_) => break,
-        }
+    let mut file = BufReader::new(File::open("userdict.txt")?);
+    let mut line = String::new();
+    while file.read_line(&mut line)? > 0 {
+        let mut it = line.trim().split_whitespace();
+        let word = it.next().ok_or_else(|| anyhow!("Bad line: {}", line))?;
+        let tag = Some(it.next().ok_or_else(|| anyhow!("Bad line: {}", line))?);
+        jieba.add_word(word, None, tag);
     }
     Ok(())
 }

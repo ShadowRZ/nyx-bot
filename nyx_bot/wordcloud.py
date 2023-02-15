@@ -15,7 +15,7 @@ from wordcloud import WordCloud
 import nyx_bot
 from nyx_bot.chat_functions import send_text_to_room
 from nyx_bot.storage import MatrixMessage
-from nyx_bot.utils import strip_tags, strip_urls
+from nyx_bot.utils import strip_tags
 
 CUTWORDS_EXE = "nyx_bot-cutword"
 FONT = os.path.join(nyx_bot.__path__[0], "wordcloud_font.ttf")
@@ -191,4 +191,4 @@ def gather_messages(
         users.add(msg_item.sender)
 
     ret = stringio.getvalue()
-    return (strip_urls(ret), count, users)
+    return (ret, count, users)
