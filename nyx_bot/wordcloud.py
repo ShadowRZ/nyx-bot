@@ -2,9 +2,10 @@ import asyncio
 import logging
 import os
 import re
+import time
 from asyncio import create_subprocess_exec
 from asyncio.subprocess import PIPE
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from io import BytesIO, StringIO
 from typing import Optional, Set, Tuple
 
@@ -19,6 +20,7 @@ from nyx_bot.utils import strip_tags
 
 CUTWORDS_EXE = "nyx_bot-cutword"
 FONT = os.path.join(nyx_bot.__path__[0], "wordcloud_font.ttf")
+TIMEZONE = timezone(timedelta(hours=8))  # UTC+8
 logger = logging.getLogger(__name__)
 
 
@@ -60,12 +62,18 @@ async def send_wordcloud(
     sender: Optional[str],
     days: Optional[int],
 ):
+    st = datetime.datetime.now().astimezone(TIMEZONE)
+    logger.info(
+        f"Starting wordcloud formatting at {st.strftime('%Y-%m-%d %H:%M:%S%z')}"
+    )
     bytesio = BytesIO()
     start_date = datetime.now()
     end_date = None
     if days is not None:
         end_date = start_date - timedelta(days=days)
     (texts, count, users) = gather_messages(room, sender, end_date)
+    st2 = time.time()
+    logger.info("Gathered message using %.3f seconds", st2 - st.timestamp())
     if count == 0:
         await send_text_to_room(
             client,
@@ -78,6 +86,8 @@ async def send_wordcloud(
         )
         return
     freqs = await get_word_freqs(texts)
+    st3 = time.time()
+    logger.info("Analyzed message using %.3f seconds", st3 - st2)
 
     loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, make_image, freqs, bytesio)
