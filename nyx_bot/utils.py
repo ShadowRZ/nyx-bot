@@ -206,12 +206,12 @@ async def parse_wordcloud_args(
                 if math.isnan(days) or math.isinf(days):
                     raise ValueError
             except ValueError:
-                raise NyxBotRuntimeError("The day argument given is not vaild.")
+                raise NyxBotRuntimeError(
+                    f"The day argument given ({args[0]}) is not vaild."
+                )
             else:
                 if (len(args) >= 2) and (args[1] == "all"):
                     sender = None
-                else:
-                    raise NyxBotRuntimeError("Argument is not valid.")
 
     return sender, days
 

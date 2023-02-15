@@ -7,7 +7,7 @@ from asyncio import create_subprocess_exec
 from asyncio.subprocess import PIPE
 from datetime import datetime, timedelta, timezone
 from io import BytesIO, StringIO
-from typing import Optional, Set, Tuple
+from typing import Optional, Tuple
 
 from nio import AsyncClient, MatrixRoom, RoomMessageText, UploadResponse
 from wand.image import Image
@@ -143,7 +143,7 @@ async def send_wordcloud(
         "count": count,
         "start_date": start_date.isoformat(sep=" "),
         "end_date": end_date.isoformat(sep=" ") if end_date is not None else None,
-        "contained_senders": list(users),
+        "sender_count": users,
     }
 
     await client.room_send(room.room_id, message_type="m.room.message", content=content)
@@ -158,7 +158,7 @@ def gather_messages(
     room: MatrixRoom,
     sender: Optional[str],
     end_date: Optional[datetime],
-) -> Tuple[str, int, Set[str]]:
+) -> Tuple[str, int, int]:
     stringio = StringIO()
     count = 0
     if sender is None:
@@ -176,7 +176,7 @@ def gather_messages(
             )
             .order_by(MatrixMessage.origin_server_ts.desc())
         )
-    users = set()
+    users = 0
     for msg_item in msg_items:
         if end_date is not None:
             if msg_item.datetime < end_date:
@@ -193,7 +193,7 @@ def gather_messages(
                 string = fwd_match.group(1)
             print(strip_tags(string), file=stringio)
             count += 1
-            users.add(msg_item.sender)
+            users += 1
         elif msg_item.body is not None:
             # XXX: Special case for Arch Linux CN
             if msg_item.sender == "@matterbridge:nichi.co":
@@ -202,7 +202,7 @@ def gather_messages(
             else:
                 print(msg_item.body, file=stringio)
             count += 1
-            users.add(msg_item.sender)
+            users += 1
         else:
             continue
 
