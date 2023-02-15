@@ -62,7 +62,7 @@ async def send_wordcloud(
     sender: Optional[str],
     days: Optional[int],
 ):
-    st = datetime.datetime.now().astimezone(TIMEZONE)
+    st = datetime.now().astimezone(TIMEZONE)
     logger.info(
         f"Starting wordcloud formatting at {st.strftime('%Y-%m-%d %H:%M:%S%z')}"
     )
