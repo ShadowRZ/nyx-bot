@@ -5,6 +5,7 @@ from typing import Optional
 
 from nio import MatrixRoom, RoomMemberEvent, RoomMessageText
 from peewee import (
+    BigIntegerField,
     BooleanField,
     CharField,
     DateField,
@@ -23,7 +24,7 @@ from nyx_bot.utils import get_external_url, make_datetime
 class MatrixMessage(Model):
     room_id = CharField()
     event_id = CharField()
-    origin_server_ts = IntegerField()
+    origin_server_ts = BigIntegerField()
     external_url = CharField(null=True)
     sender = CharField()
     body = TextField(null=True)
@@ -73,7 +74,7 @@ class MatrixMessage(Model):
 class MembershipUpdates(Model):
     room_id = CharField()
     event_id = CharField()
-    origin_server_ts = IntegerField()
+    origin_server_ts = BigIntegerField()
     sender = CharField()
     state_key = CharField()
     avatar_url = CharField(null=True)
