@@ -44,8 +44,8 @@ def make_image(freqs, bytesio):
     image = (
         WordCloud(
             font_path=FONT,
-            width=1600,
-            height=800,
+            width=800,
+            height=400,
         )
         .generate_from_frequencies(freqs)
         .to_image()
@@ -176,14 +176,14 @@ def gather_messages(
             )
             if fwd_match is not None:
                 string = fwd_match.group(1)
-            print(strip_urls(strip_tags(string)), file=stringio)
+            print(strip_tags(string), file=stringio)
         elif msg_item.body is not None:
             # XXX: Special case for Arch Linux CN
             if msg_item.sender == "@matterbridge:nichi.co":
                 data = re.sub(r"^\[.*\] ", "", msg_item.body)
-                print(strip_urls(data.strip()), file=stringio)
+                print(data.strip(), file=stringio)
             else:
-                print(strip_urls(msg_item.body), file=stringio)
+                print(msg_item.body, file=stringio)
         else:
             continue
 
@@ -191,4 +191,4 @@ def gather_messages(
         users.add(msg_item.sender)
 
     ret = stringio.getvalue()
-    return (ret, count, users)
+    return (strip_urls(ret), count, users)

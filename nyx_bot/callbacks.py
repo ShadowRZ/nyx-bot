@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 
@@ -12,7 +13,6 @@ from nio import (
 )
 
 from nyx_bot.bot_commands import Command
-from nyx_bot.chat_functions import send_exception
 from nyx_bot.config import Config
 from nyx_bot.message_responses import Message
 from nyx_bot.storage import MatrixMessage, MembershipUpdates
@@ -26,6 +26,7 @@ from nyx_bot.utils import (
 )
 
 logger = logging.getLogger(__name__)
+callbacks_ = set()
 
 
 class Callbacks:
@@ -96,14 +97,9 @@ class Callbacks:
             message = Message(
                 self.client, self.config, msg, room, event, reply_to, self.room_features
             )
-            try:
-                await message.process()
-            except Exception as inst:
-                # Clear any previous typing event
-                await self.client.room_typing(room.room_id, False)
-                await send_exception(self.client, inst, room.room_id, event.event_id)
-            finally:
-                return
+            task = asyncio.create_task(message.process())
+            callbacks_.add(task)
+            task.add_done_callback(callbacks_.discard)
 
         # Treat it as a command only if it has a prefix
         if has_command_prefix:
@@ -120,12 +116,9 @@ class Callbacks:
                 self.replace_map,
                 self.command_prefix,
             )
-            try:
-                await command.process()
-            except Exception as inst:
-                # Clear any previous typing event
-                await self.client.room_typing(room.room_id, False)
-                await send_exception(self.client, inst, room.room_id, event.event_id)
+            task = asyncio.create_task(command.process())
+            callbacks_.add(task)
+            task.add_done_callback(callbacks_.discard)
 
     async def unknown(self, room: MatrixRoom, event: UnknownEvent) -> None:
         """Callback for when an event with a type that is unknown to matrix-nio is received.

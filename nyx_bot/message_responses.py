@@ -4,7 +4,11 @@ from zlib import crc32
 
 from nio import AsyncClient, MatrixRoom, RoomMessageText
 
-from nyx_bot.chat_functions import gen_result_randomdraw, send_text_to_room
+from nyx_bot.chat_functions import (
+    gen_result_randomdraw,
+    send_exception,
+    send_text_to_room,
+)
 from nyx_bot.config import Config
 from nyx_bot.jerryxiao import send_jerryxiao
 from nyx_bot.trpg_dicer import get_trpg_dice_result
@@ -47,6 +51,16 @@ class Message:
 
     async def process(self) -> None:
         """Process and possibly respond to the message"""
+        try:
+            await self._process()
+        except Exception as inst:
+            # Clear any previous typing event
+            await self.client.room_typing(self.room.room_id, False)
+            await send_exception(
+                self.client, inst, self.room.room_id, self.event.event_id
+            )
+
+    async def _process(self) -> None:
         if re.match("^(!!|\\\\|/|¡¡)", self.message_content):
             await self._jerryxiao()
         elif self.message_content.startswith("@@"):

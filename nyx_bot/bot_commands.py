@@ -16,6 +16,7 @@ from nio import (
 from nyx_bot.archcn_utils import send_archlinuxcn_pkg, update_archlinuxcn_pkg
 from nyx_bot.chat_functions import (
     bulk_update_messages,
+    send_exception,
     send_multiquote_image,
     send_quote_image,
     send_text_to_room,
@@ -68,6 +69,16 @@ class Command:
 
     async def process(self):
         """Process the command"""
+        try:
+            await self._process()
+        except Exception as inst:
+            # Clear any previous typing event
+            await self.client.room_typing(self.room.room_id, False)
+            await send_exception(
+                self.client, inst, self.room.room_id, self.event.event_id
+            )
+
+    async def _process(self):
         if self.command == "quote":
             await self._quote()
         elif self.command == "archlinuxcn":
