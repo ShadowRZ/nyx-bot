@@ -81,6 +81,7 @@ class Config:
         # Determine which one the user intends
         sqlite_scheme = "sqlite://"
         postgres_scheme = "postgres://"
+        mysql_scheme = "mysql://"
         if database_path.startswith(sqlite_scheme):
             self.database = {
                 "type": "sqlite",
@@ -90,6 +91,11 @@ class Config:
             self.database = {
                 "type": "postgres",
                 "connection_string": f"postgresql://{database_path[len(postgres_scheme):]}",
+            }
+        elif database_path.startswith(mysql_scheme):
+            self.database = {
+                "type": "mysql",
+                "connection_string": f"mysql://{database_path[len(postgres_scheme):]}",
             }
         else:
             raise ConfigError("Invalid connection string for storage.database")

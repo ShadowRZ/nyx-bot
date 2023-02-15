@@ -31,6 +31,8 @@ encryption = false
   #     database: "sqlite://bot.db"
   # For Postgres, this would look like:
   #     database: "postgres://username:password@localhost/dbname?sslmode=disable"
+  # For MySQL, this would look like:
+  #     database: "mysql://username:password@localhost/dbname"
   database = "sqlite://bot.db"
   # The path to a directory for internal bot storage
   # containing encryption keys, sync tokens, etc.

@@ -1,8 +1,8 @@
 # Used for migrations
 import logging
 
-from peewee import PostgresqlDatabase, SqliteDatabase
-from playhouse.migrate import PostgresqlMigrator, SqliteMigrator, migrate
+from peewee import MySQLDatabase, PostgresqlDatabase, SqliteDatabase
+from playhouse.migrate import MySQLMigrator, PostgresqlMigrator, SqliteMigrator, migrate
 
 from nyx_bot.storage import DatabaseVersion, MatrixMessage, UserTag
 
@@ -14,6 +14,8 @@ def migrate_db(db):
         migrator = SqliteMigrator(db)
     elif isinstance(db, PostgresqlDatabase):
         migrator = PostgresqlMigrator(db)
+    elif isinstance(db, MySQLDatabase):
+        migrator = MySQLMigrator(db)
 
     version_item = DatabaseVersion.get_or_none()
     if version_item is None:
