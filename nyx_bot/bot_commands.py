@@ -300,13 +300,13 @@ class Command:
         )
 
     async def _ping(self):
-        event_ts = make_datetime(self.event.origin_server_ts)
+        event_ts = make_datetime(self.event.server_timestamp)
         now = time.time()
         delta = now - event_ts.timestamp()
         await send_text_to_room(
             self.client,
             self.room.room_id,
-            f"Pong after {delta} second",
+            f"Pong after {delta} seconds",
             notice=False,
             markdown_convert=False,
             reply_to_event_id=self.event.event_id,
