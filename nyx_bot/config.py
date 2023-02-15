@@ -95,7 +95,7 @@ class Config:
         elif database_path.startswith(mysql_scheme):
             self.database = {
                 "type": "mysql",
-                "connection_string": f"mysql://{database_path[len(postgres_scheme):]}",
+                "connection_string": f"mysql://{database_path[len(mysql_scheme):]}",
             }
         else:
             raise ConfigError("Invalid connection string for storage.database")
