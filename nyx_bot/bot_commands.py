@@ -1,12 +1,14 @@
 import logging
 import time
 from calendar import THURSDAY
+from collections import defaultdict
 from datetime import date, datetime
 from zlib import crc32
 
 from dateutil.relativedelta import relativedelta
 from nio import (
     AsyncClient,
+    JoinedMembersError,
     MatrixRoom,
     RoomGetEventError,
     RoomMessageImage,
@@ -27,6 +29,7 @@ from nyx_bot.config import Config
 from nyx_bot.errors import NyxBotRuntimeError, NyxBotValueError
 from nyx_bot.storage import MatrixMessage, MembershipUpdates, UserTag
 from nyx_bot.utils import (
+    get_user_id_parts,
     make_datetime,
     make_divergence,
     parse_matrixdotto_link,
@@ -129,6 +132,8 @@ class Command:
             await self._wordcloud()
         elif self.command == "ping":
             await self._ping()
+        elif self.command == "servers":
+            await self._servers()
         else:
             await self._unknown_command()
 
@@ -308,6 +313,28 @@ class Command:
             self.room.room_id,
             f"Pong after {delta} seconds",
             notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
+
+    async def _servers(self):
+        results = defaultdict(int)
+        members_response = await self.client.joined_members(self.room.room_id)
+        if isinstance(members_response, JoinedMembersError):
+            error = members_response.message
+            raise NyxBotRuntimeError(f"Gathering member list failed: {error}")
+        members = members_response.members
+        for m in members:
+            user_id = m.user_id
+            _, domain = get_user_id_parts(user_id)
+            results[domain] += 1
+        msg = "\n".join(f"{k}: {v}" for k, v in results.items())
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            msg,
+            notice=True,
             markdown_convert=False,
             reply_to_event_id=self.event.event_id,
             literal_text=True,
