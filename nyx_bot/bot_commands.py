@@ -3,6 +3,7 @@ import time
 from calendar import THURSDAY
 from collections import defaultdict
 from datetime import date, datetime
+from operator import itemgetter
 from zlib import crc32
 
 from dateutil.relativedelta import relativedelta
@@ -329,7 +330,11 @@ class Command:
             user_id = m.user_id
             _, domain = get_user_id_parts(user_id)
             results[domain] += 1
-        msg = "\n".join(f"{k}: {v}" for k, v in results.items())
+        # First sort by server name
+        sorted_ = sorted(results.items(), key=itemgetter(0))
+        # Then by count
+        sorted_ = sorted(sorted_, key=itemgetter(1), reverse=True)
+        msg = "\n".join(f"{k}: {v}" for k, v in sorted_)
         await send_text_to_room(
             self.client,
             self.room.room_id,
