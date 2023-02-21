@@ -70,6 +70,11 @@ class Callbacks:
                 MatrixMessage.update_message(room, event, event_replace, include_text)
             return
 
+        # XXX: Special case for Arch Linux CN
+        # Also ignore maubot commands
+        if msg.startswith("!"):
+            return
+
         logger.debug(
             f"Bot message received for room {room.display_name} | "
             f"{room.user_name(event.sender)}: {msg}"
