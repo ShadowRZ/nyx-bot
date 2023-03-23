@@ -176,7 +176,7 @@ def gather_messages(
             )
             .order_by(MatrixMessage.origin_server_ts.desc())
         )
-    users = 0
+    users = set()
     for msg_item in msg_items:
         if end_date is not None:
             if msg_item.datetime < end_date:
@@ -193,7 +193,7 @@ def gather_messages(
                 string = fwd_match.group(1)
             print(strip_tags(string), file=stringio)
             count += 1
-            users += 1
+            users.add(msg_item.sender)
         elif msg_item.body is not None:
             # XXX: Special case for Arch Linux CN
             if msg_item.sender == "@matterbridge:nichi.co":
@@ -202,9 +202,9 @@ def gather_messages(
             else:
                 print(msg_item.body, file=stringio)
             count += 1
-            users += 1
+            users.add(msg_item.sender)
         else:
             continue
 
     ret = stringio.getvalue()
-    return (ret, count, users)
+    return (ret, count, len(users))
