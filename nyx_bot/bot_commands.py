@@ -135,6 +135,8 @@ class Command:
             await self._ping()
         elif self.command == "servers":
             await self._servers()
+        elif self.command == "lookup_message":
+            await self._lookup_message()
         else:
             await self._unknown_command()
 
@@ -174,6 +176,40 @@ class Command:
             self.client,
             self.room.room_id,
             f"Last event: {matrixdotto_url}",
+            notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
+
+    async def _lookup_message(self):
+        if not self.args:
+            raise NyxBotValueError("No external URL given.")
+        target_url = self.args[0]
+        result = (
+            MatrixMessage.select()
+            .where(
+                (MatrixMessage.room_id == self.room.room_id)
+                & (MatrixMessage.external_url == target_url)
+            )
+            .get_or_none()
+        )
+        if result is None:
+            await send_text_to_room(
+                self.client,
+                self.room.room_id,
+                "The message with the specified external URL wasn't found in the bot's database.",
+                notice=False,
+                markdown_convert=False,
+                reply_to_event_id=self.event.event_id,
+                literal_text=True,
+            )
+            return
+        matrixdotto_url = f"https://matrix.to/#/{self.room.room_id}/{result.event_id}"
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            f"{matrixdotto_url}",
             notice=False,
             markdown_convert=False,
             reply_to_event_id=self.event.event_id,
