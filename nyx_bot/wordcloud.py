@@ -71,6 +71,7 @@ async def send_wordcloud(
     logger.info(
         f"Starting wordcloud formatting at {st.strftime('%Y-%m-%d %H:%M:%S%z')}"
     )
+    st2 = time.time()
     bytesio = BytesIO()
     start_date = datetime.now()
     end_date = None
@@ -80,7 +81,7 @@ async def send_wordcloud(
 
     freqs = await get_word_freqs(texts)
     st3 = time.time()
-    logger.info("Analyzed message using %.3f seconds", st3 - st)
+    logger.info("Analyzed message using %.3f seconds", st3 - st2)
 
     count = texts.count
     if count == 0:
