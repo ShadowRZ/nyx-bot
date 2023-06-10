@@ -172,8 +172,7 @@ class MessageIter:
         sender: Optional[str],
         end_date: Optional[datetime],
     ):
-        self.msg_items = None
-        self.final_batch = False
+        self.done = False
         self.sender = sender
         self.end_date = end_date
         self.room = room
