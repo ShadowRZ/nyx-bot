@@ -32,14 +32,13 @@ async def get_word_freqs(texts):
         stdout=PIPE,
     )
 
-    stringio = StringIO()
     for i in texts:
-        print(i, file=stringio)
-
-    text = stringio.getvalue()
-    stdout, _ = await proc.communicate(input=text.encode("utf-8"))
+        proc.stdin.write((i or "").encode("utf-8"))
+        proc.stdin.write(b"\n")
+    proc.stdin.write_eof()
 
     freqs = {}
+    stdout = await proc.stdout.read()
     lines = stdout.decode().splitlines()
     for line in lines:
         word, freq = line.split(None, 1)
@@ -78,7 +77,7 @@ async def send_wordcloud(
     end_date = None
     if days is not None:
         end_date = start_date - timedelta(days=days)
-    texts = MessageIter(room, event.server_timestamp, sender, end_date)
+    texts = MessageIter(room, sender, end_date)
 
     freqs = await get_word_freqs(texts)
     st3 = time.time()
@@ -162,9 +161,6 @@ async def send_wordcloud(
 
 
 DROP_USERS = {"@telegram_1454289754:nichi.co", "@variation:matrix.org", "@bot:bgme.me"}
-MessageItem = namedtuple(
-    "MessageItem", ["origin_server_ts", "datetime", "body", "formatted_body", "sender"]
-)
 
 
 class MessageIter:
@@ -173,30 +169,26 @@ class MessageIter:
     def __init__(
         self,
         room: MatrixRoom,
-        base_ts: int,
         sender: Optional[str],
         end_date: Optional[datetime],
     ):
         self.msg_items = None
         self.final_batch = False
         self.sender = sender
-        self.base_ts = base_ts
-        self.last_ts = self.base_ts
         self.end_date = end_date
         self.room = room
         self.users = set()
         self.count = 0
 
-    def order_next_batch(self):
+    def __iter__(self):
+        return self.into_iter()
+
+    def into_iter(self):
         if self.sender is None:
             msg_items = (
                 MatrixMessage.select()
-                .where(
-                    (MatrixMessage.room_id == self.room.room_id)
-                    & (MatrixMessage.origin_server_ts < self.last_ts)
-                )
+                .where(MatrixMessage.room_id == self.room.room_id)
                 .order_by(MatrixMessage.origin_server_ts.desc())
-                .limit(self.LIMIT)
             )
         else:
             msg_items = (
@@ -204,46 +196,20 @@ class MessageIter:
                 .where(
                     (MatrixMessage.room_id == self.room.room_id)
                     & (MatrixMessage.sender == self.sender)
-                    & (MatrixMessage.origin_server_ts < self.last_ts)
                 )
                 .order_by(MatrixMessage.origin_server_ts.desc())
-                .limit(self.LIMIT)
             )
-
-        self.msg_items = [
-            MessageItem(
-                i.origin_server_ts, i.datetime, i.body, i.formatted_body, i.sender
-            )
-            for i in msg_items
-        ]
-        self.msg_items_iter = self.msg_items.__iter__()
-        if msg_items.count() < self.LIMIT:
-            self.final_batch = True
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.msg_items is None:
-            self.order_next_batch()
-        try:
-            msg_item = next(self.msg_items_iter)
-            while msg_item.sender in DROP_USERS:  # XXX: Special case for Arch Linux CN
-                msg_item = next(self.msg_items_iter)
+        for msg_item in msg_items.namedtuples().iterator():
+            if msg_item.sender in DROP_USERS:  # XXX: Special case for Arch Linux CN
+                continue
             if self.end_date is not None:
                 if msg_item.datetime < self.end_date:
-                    raise StopIteration
+                    return
             self.count += 1
             string = process_message(msg_item)
             self.users.add(msg_item.sender)
             self.last_ts = msg_item.origin_server_ts
-            return string
-        except StopIteration:
-            if self.final_batch:
-                raise StopIteration
-            else:
-                self.order_next_batch()
-                return next(self)
+            yield string
 
 
 def process_message(msg_item):
