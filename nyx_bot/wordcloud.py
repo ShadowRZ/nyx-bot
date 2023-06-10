@@ -5,6 +5,7 @@ import re
 import time
 from asyncio import create_subprocess_exec
 from asyncio.subprocess import PIPE
+from collections import namedtuple
 from datetime import datetime, timedelta, timezone
 from io import BytesIO, StringIO
 from typing import Optional
@@ -161,6 +162,9 @@ async def send_wordcloud(
 
 
 DROP_USERS = {"@telegram_1454289754:nichi.co", "@variation:matrix.org", "@bot:bgme.me"}
+MessageItem = namedtuple(
+    "MessageItem", ["origin_server_ts", "body", "formatted_body", "sender"]
+)
 
 
 class MessageIter:
@@ -207,7 +211,11 @@ class MessageIter:
                 .limit(self.LIMIT)
             )
 
-        self.msg_items = msg_items
+        self.msg_items = [
+            MessageItem(i.origin_server_ts, i.body, i.formatted_body, i.sender)
+            for i in msg_items
+        ]
+        self.msg_items_iter = self.msg_items.__iter__()
         if msg_items.count() < self.LIMIT:
             self.final_batch = True
 
@@ -218,9 +226,9 @@ class MessageIter:
         if self.msg_items is None:
             self.order_next_batch()
         try:
-            msg_item = next(self.msg_items.iterator())
+            msg_item = next(self.msg_items_iter)
             while msg_item.sender in DROP_USERS:  # XXX: Special case for Arch Linux CN
-                msg_item = next(self.msg_items.iterator())
+                msg_item = next(self.msg_items_iter)
             if self.end_date is not None:
                 if msg_item.datetime < self.end_date:
                     raise StopIteration
