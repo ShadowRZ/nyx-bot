@@ -163,12 +163,11 @@ async def send_wordcloud(
 
 DROP_USERS = {"@telegram_1454289754:nichi.co", "@variation:matrix.org", "@bot:bgme.me"}
 MessageItem = namedtuple(
-    "MessageItem", ["origin_server_ts", "body", "formatted_body", "sender"]
+    "MessageItem", ["origin_server_ts", "datetime", "body", "formatted_body", "sender"]
 )
 
 
 class MessageIter:
-
     LIMIT = 1000
 
     def __init__(
@@ -212,7 +211,9 @@ class MessageIter:
             )
 
         self.msg_items = [
-            MessageItem(i.origin_server_ts, i.body, i.formatted_body, i.sender)
+            MessageItem(
+                i.origin_server_ts, i.datetime, i.body, i.formatted_body, i.sender
+            )
             for i in msg_items
         ]
         self.msg_items_iter = self.msg_items.__iter__()
