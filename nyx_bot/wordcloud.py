@@ -177,6 +177,7 @@ class MessageIter:
         self.base_ts = base_ts
         self.last_ts = self.base_ts
         self.end_date = end_date
+        self.room = room
         self.users = set()
         self.count = 0
 
