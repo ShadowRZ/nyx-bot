@@ -34,6 +34,7 @@ async def get_word_freqs(texts):
     for i in texts:
         proc.stdin.write(i.encode("utf-8"))
         proc.stdin.write(b"\n")
+    proc.stdin.write_eof()
 
     freqs = {}
     stdout = await proc.stdout.read()
