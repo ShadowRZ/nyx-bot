@@ -183,27 +183,16 @@ class MessageIter:
     def batches(self, limit: int):
         """Return a iterator for query pagination."""
         while not self.done:
-            if self.sender is None:
-                msg_items = (
-                    MatrixMessage.select()
-                    .where(
-                        (MatrixMessage.room_id == self.room.room_id)
-                        & (MatrixMessage.origin_server_ts < self.last_ts)
-                    )
-                    .order_by(MatrixMessage.origin_server_ts.desc())
-                    .limit(limit)
-                )
-            else:
-                msg_items = (
-                    MatrixMessage.select()
-                    .where(
-                        (MatrixMessage.room_id == self.room.room_id)
-                        & (MatrixMessage.sender == self.sender)
-                        & (MatrixMessage.origin_server_ts < self.last_ts)
-                    )
-                    .order_by(MatrixMessage.origin_server_ts.desc())
-                    .limit(limit)
-                )
+            msg_items = MatrixMessage.select().where(
+                MatrixMessage.room_id == self.room.room_id
+            )
+            if self.sender is not None:
+                msg_items = msg_items.where(MatrixMessage.sender == self.sender)
+            if self.end_date is not None:
+                msg_items = msg_items.where(MatrixMessage.datetime <= self.end_date)
+            msg_items = msg_items.order_by(MatrixMessage.origin_server_ts.desc()).limit(
+                limit
+            )
             if msg_items.count() < limit:
                 self.done = True
             yield msg_items
@@ -213,9 +202,6 @@ class MessageIter:
             for msg_item in msg_items.namedtuples().iterator():
                 if msg_item.sender in DROP_USERS:  # XXX: Special case for Arch Linux CN
                     continue
-                if self.end_date is not None:
-                    if msg_item.datetime < self.end_date:
-                        return
                 self.count += 1
                 string = process_message(msg_item)
                 self.users.add(msg_item.sender)
