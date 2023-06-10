@@ -96,7 +96,7 @@ async def send_wordcloud(
         )
         return
 
-    users = texts.users
+    users = len(texts.users)
 
     loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, make_image, freqs, bytesio)
