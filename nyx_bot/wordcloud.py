@@ -204,7 +204,7 @@ class MessageIter:
 
     def __iter__(self):
         for msg_items in self.batches(self.LIMIT):
-            for msg_item in msg_items.namedtuples().iterator():
+            for msg_item in msg_items:
                 if msg_item.sender in DROP_USERS:  # XXX: Special case for Arch Linux CN
                     continue
                 self.count += 1

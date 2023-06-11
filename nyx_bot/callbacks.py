@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 
@@ -40,6 +41,7 @@ class Callbacks:
         self.room_features = config.room_features
         self.command_prefix = config.command_prefix
         self.replace_map = {}
+        self.tasks = set()
 
     async def message(self, room: MatrixRoom, event: RoomMessageText) -> None:
         """Callback for when a message event is received
@@ -100,7 +102,9 @@ class Callbacks:
             message = Message(
                 self.client, self.config, msg, room, event, reply_to, self.room_features
             )
-            await message.process()
+            task = asyncio.create_task(message.process())
+            self.tasks.add(task)
+            task.add_done_callback(self.tasks.discard)
 
         # Treat it as a command only if it has a prefix
         if has_command_prefix:
@@ -117,7 +121,9 @@ class Callbacks:
                 self.replace_map,
                 self.command_prefix,
             )
-            await command.process()
+            task = asyncio.create_task(command.process())
+            self.tasks.add(task)
+            task.add_done_callback(self.tasks.discard)
 
     async def unknown(self, room: MatrixRoom, event: UnknownEvent) -> None:
         """Callback for when an event with a type that is unknown to matrix-nio is received.
@@ -184,4 +190,3 @@ class Callbacks:
     async def membership(self, room: MatrixRoom, event: RoomMemberEvent) -> None:
         timestamp = make_datetime(event.server_timestamp)
         MembershipUpdates.update_membership(room, event, timestamp)
-        pass
