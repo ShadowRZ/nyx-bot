@@ -6,7 +6,7 @@ import time
 from asyncio import create_subprocess_exec
 from asyncio.subprocess import PIPE
 from datetime import datetime, timedelta, timezone
-from io import BytesIO
+from io import BytesIO, StringIO
 from typing import Optional
 
 from nio import AsyncClient, MatrixRoom, RoomMessageText, UploadResponse
@@ -31,13 +31,14 @@ async def get_word_freqs(texts):
         stdout=PIPE,
     )
 
+    stringio = StringIO()
+
     for i in texts:
-        proc.stdin.write((i or "").encode("utf-8"))
-        proc.stdin.write(b"\n")
-    proc.stdin.write_eof()
+        print(i, file=stringio)
+
+    stdout, _ = await proc.communicate(input=stringio.getvalue().encode("utf-8"))
 
     freqs = {}
-    stdout = await proc.stdout.read()
     lines = stdout.decode().splitlines()
     for line in lines:
         word, freq = line.split(None, 1)
