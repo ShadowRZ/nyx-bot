@@ -2,13 +2,7 @@ import asyncio
 import logging
 import time
 
-from nio import (
-    AsyncClient,
-    MatrixRoom,
-    RoomMemberEvent,
-    RoomMessageText,
-    UnknownEvent,
-)
+from nio import AsyncClient, MatrixRoom, RoomMemberEvent, RoomMessageText, UnknownEvent
 
 from nyx_bot.bot_commands import Command
 from nyx_bot.config import Config
