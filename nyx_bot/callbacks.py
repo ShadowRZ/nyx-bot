@@ -1,10 +1,9 @@
+import asyncio
 import logging
 import time
 
 from nio import (
     AsyncClient,
-    InviteMemberEvent,
-    JoinError,
     MatrixRoom,
     RoomMemberEvent,
     RoomMessageText,
@@ -100,7 +99,7 @@ class Callbacks:
             message = Message(
                 self.client, self.config, msg, room, event, reply_to, self.room_features
             )
-            await message.process()
+            asyncio.create_task(message.process())
 
         # Treat it as a command only if it has a prefix
         if has_command_prefix:
@@ -117,7 +116,7 @@ class Callbacks:
                 self.replace_map,
                 self.command_prefix,
             )
-            await command.process()
+            asyncio.create_task(command.process())
 
     async def unknown(self, room: MatrixRoom, event: UnknownEvent) -> None:
         """Callback for when an event with a type that is unknown to matrix-nio is received.
@@ -140,46 +139,6 @@ class Callbacks:
         logger.debug(
             f"Got unknown event with type to {event.type} from {event.sender} in {room.room_id}."
         )
-
-    async def invite(self, room: MatrixRoom, event: InviteMemberEvent) -> None:
-        """Callback for when an invite is received. Join the room specified in the invite.
-
-        Args:
-            room: The room that we are invited to.
-
-            event: The invite event.
-        """
-        logger.debug(f"Got invite to {room.room_id} from {event.sender}.")
-
-        # Attempt to join 3 times before giving up
-        for attempt in range(3):
-            result = await self.client.join(room.room_id)
-            if type(result) == JoinError:
-                logger.error(
-                    f"Error joining room {room.room_id} (attempt %d): %s",
-                    attempt,
-                    result.message,
-                )
-            else:
-                break
-        else:
-            logger.error("Unable to join room: %s", room.room_id)
-
-        # Successfully joined room
-        logger.info(f"Joined {room.room_id}")
-
-    async def invite_event_filtered_callback(
-        self, room: MatrixRoom, event: InviteMemberEvent
-    ) -> None:
-        """
-        Since the InviteMemberEvent is fired for every m.room.member state received
-        in a sync response's `rooms.invite` section, we will receive some that are
-        not actually our own invite event (such as the inviter's membership).
-        This makes sure we only call `callbacks.invite` with our own invite events.
-        """
-        if event.state_key == self.client.user_id:
-            # This is our own membership (invite) event
-            await self.invite(room, event)
 
     async def membership(self, room: MatrixRoom, event: RoomMemberEvent) -> None:
         timestamp = make_datetime(event.server_timestamp)

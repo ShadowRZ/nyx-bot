@@ -9,7 +9,6 @@ from aiohttp import ClientConnectionError, ServerDisconnectedError
 from nio import (
     AsyncClient,
     AsyncClientConfig,
-    InviteMemberEvent,
     LocalProtocolError,
     LoginError,
     RoomMemberEvent,
@@ -88,9 +87,6 @@ async def main():
     callbacks = Callbacks(client, config)
     client.add_event_callback(callbacks.message, (RoomMessageText,))
     client.add_event_callback(callbacks.unknown, (UnknownEvent,))
-    client.add_event_callback(
-        callbacks.invite_event_filtered_callback, (InviteMemberEvent,)
-    )
     client.add_event_callback(callbacks.membership, (RoomMemberEvent,))
 
     # Keep trying to reconnect on failure (with some time in-between)
@@ -134,6 +130,10 @@ async def main():
         except (ClientConnectionError, ServerDisconnectedError, TimeoutError):
             logger.warning("Unable to connect to homeserver, retrying in 15s...")
 
+            # Sleep so we don't bombard the server with login requests
+            sleep(15)
+        except Exception:
+            logger.exception("An exception was raised.")
             # Sleep so we don't bombard the server with login requests
             sleep(15)
         finally:
