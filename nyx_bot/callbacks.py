@@ -1,7 +1,15 @@
 import asyncio
 import logging
 
-from nio import AsyncClient, MatrixRoom, RoomMemberEvent, RoomMessageText, UnknownEvent
+from nio import (
+    AsyncClient,
+    MatrixRoom,
+    PowerLevels,
+    RoomGetStateEventError,
+    RoomMemberEvent,
+    RoomMessageText,
+    UnknownEvent,
+)
 
 from nyx_bot.bot_commands import Command
 from nyx_bot.config import Config
@@ -132,6 +140,22 @@ class Callbacks:
         ):
             content = event.content or {}
             name = content.get("displayname")
-            logger.info(
+            logger.debug(
                 f"New user joined in {room.display_name}: {name} ({event.state_key})"
             )
+            state_resp = await self.client.room_get_state_event(
+                room.room_id, "m.room.power_levels"
+            )
+            if isinstance(state_resp, RoomGetStateEventError):
+                logger.debug(
+                    f"Failed to get power level data in room {room.display_name} ({room.room_id}). Stop processing."
+                )
+                return
+            content = state_resp.content
+            powers = PowerLevels(
+                events=content.get("events"), users=content.get("users")
+            )
+            if not powers.can_user_send_state(self.client.user, "m.room.power_levels"):
+                logger.debug(
+                    f"Bot is unable to update power levels in {room.display_name} ({room.room_id}). Stop processing."
+                )

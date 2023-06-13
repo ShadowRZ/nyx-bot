@@ -15,7 +15,7 @@ def run():
         from . import main
 
         # Run the main function of the bot
-        asyncio.run(main.main())
+        asyncio.get_event_loop().run_until_complete(main.main())
     except ImportError as e:
         print("Unable to import nyx_box.main:", e)
     except KeyboardInterrupt:
