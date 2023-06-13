@@ -96,7 +96,7 @@ class Callbacks:
             message = Message(
                 self.client, self.config, msg, room, event, reply_to, self.room_features
             )
-            asyncio.create_task(message.process())
+            await asyncio.create_task(message.process())
 
         # Treat it as a command only if it has a prefix
         if has_command_prefix:
@@ -113,7 +113,7 @@ class Callbacks:
                 self.replace_map,
                 self.command_prefix,
             )
-            asyncio.create_task(command.process())
+            await asyncio.create_task(command.process())
 
     async def unknown(self, room: MatrixRoom, event: UnknownEvent) -> None:
         """Callback for when an event with a type that is unknown to matrix-nio is received.
