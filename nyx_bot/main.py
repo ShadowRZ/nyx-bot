@@ -82,6 +82,9 @@ async def main():
         client.access_token = config.user_token
         client.user_id = config.user_id
 
+    callbacks = Callbacks(client, config)
+    callbacks_added = False
+
     # Keep trying to reconnect on failure (with some time in-between)
     while True:
         try:
@@ -128,11 +131,13 @@ async def main():
             logger.info("Initial sync completed.")
             sync_token = resp.next_batch
 
-            # Set up event callbacks
-            callbacks = Callbacks(client, config)
-            client.add_event_callback(callbacks.message, (RoomMessageText,))
-            client.add_event_callback(callbacks.unknown, (UnknownEvent,))
-            client.add_event_callback(callbacks.membership, (RoomMemberEvent,))
+            if not callbacks_added:
+                # Set up event callbacks
+                client.add_event_callback(callbacks.message, (RoomMessageText,))
+                client.add_event_callback(callbacks.unknown, (UnknownEvent,))
+                client.add_event_callback(callbacks.membership, (RoomMemberEvent,))
+
+                callbacks_added = True
 
             await client.sync_forever(timeout=30000, full_state=True, since=sync_token)
 
