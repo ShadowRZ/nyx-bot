@@ -13,9 +13,9 @@ from nio import (
     LoginError,
     RoomMemberEvent,
     RoomMessageText,
+    SyncError,
     UnknownEvent,
 )
-from nio.store.database import DefaultStore
 from peewee import OperationalError
 from playhouse.db_url import connect
 
@@ -65,7 +65,6 @@ async def main():
     client_config = AsyncClientConfig(
         max_limit_exceeded=0,
         max_timeouts=0,
-        store=DefaultStore,
         store_sync_tokens=True,
         encryption_enabled=config.encryption,
     )
@@ -83,18 +82,13 @@ async def main():
         client.access_token = config.user_token
         client.user_id = config.user_id
 
-    # Set up event callbacks
-    callbacks = Callbacks(client, config)
-    client.add_event_callback(callbacks.message, (RoomMessageText,))
-    client.add_event_callback(callbacks.unknown, (UnknownEvent,))
-    client.add_event_callback(callbacks.membership, (RoomMemberEvent,))
-
     # Keep trying to reconnect on failure (with some time in-between)
     while True:
         try:
             if config.user_token:
                 # Use token to log in
-                client.load_store()
+                if config.encryption:
+                    client.load_store()
 
                 # Sync encryption keys with the server
                 if client.should_upload_keys:
@@ -125,7 +119,22 @@ async def main():
                 # Login succeeded!
 
             logger.info(f"Logged in as {config.user_id}")
-            await client.sync_forever(timeout=30000, full_state=True)
+            # Do a initial sync
+            resp = await client.sync(timeout=30000, full_state=True)
+            while isinstance(resp, SyncError):
+                logger.warning("Initial sync failed, retrying in 30s...")
+                sleep(30)
+                resp = await client.sync(timeout=30000, full_state=True)
+            logger.info("Initial sync completed.")
+            sync_token = resp.next_batch
+
+            # Set up event callbacks
+            callbacks = Callbacks(client, config)
+            client.add_event_callback(callbacks.message, (RoomMessageText,))
+            client.add_event_callback(callbacks.unknown, (UnknownEvent,))
+            client.add_event_callback(callbacks.membership, (RoomMemberEvent,))
+
+            await client.sync_forever(timeout=30000, full_state=True, since=sync_token)
 
         except (ClientConnectionError, ServerDisconnectedError, TimeoutError):
             logger.warning("Unable to connect to homeserver, retrying in 15s...")

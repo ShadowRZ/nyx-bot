@@ -125,3 +125,13 @@ class Callbacks:
     async def membership(self, room: MatrixRoom, event: RoomMemberEvent) -> None:
         timestamp = make_datetime(event.server_timestamp)
         MembershipUpdates.update_membership(room, event, timestamp)
+        if event.membership == "join" and event.prev_membership in (
+            None,
+            "invite",
+            "leave",
+        ):
+            content = event.content or {}
+            name = content.get("displayname")
+            logger.info(
+                f"New user joined in {room.display_name}: {name} ({event.state_key})"
+            )
