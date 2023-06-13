@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import time
 
 from nio import AsyncClient, MatrixRoom, RoomMemberEvent, RoomMessageText, UnknownEvent
 
@@ -42,25 +41,14 @@ class Callbacks:
 
             event: The event defining the message.
         """
-        event_replace = get_replaces(event)
-        # Ignore too old messages
-        current_time = int(time.time() * 1000)
-        if current_time - event.server_timestamp > 60000:
-            return
-
-        if event_replace:
+        if event_replace := get_replaces(event):
             self.replace_map[event_replace] = event.event_id
 
         # Extract the message text
         msg = strip_beginning_quote(event.body)
 
         # Ignore messages from ourselves
-        if event.sender == self.client.user:
-            if not is_bot_event(event):
-                include_text = True
-                if not should_record_message_content(self.room_features, room.room_id):
-                    include_text = False
-                MatrixMessage.update_message(room, event, event_replace, include_text)
+        if event.sender == self.client.user and is_bot_event(event):
             return
 
         # XXX: Special case for Arch Linux CN
