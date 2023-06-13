@@ -8,3 +8,4 @@ peewee
 python-dateutil
 wordcloud
 aiohttp
+xxhash

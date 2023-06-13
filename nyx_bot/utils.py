@@ -7,6 +7,7 @@ from random import Random
 from typing import Dict, Optional, Tuple
 from urllib.parse import unquote, urlparse
 
+import xxhash
 from nio import AsyncClient, Event, MatrixRoom, RoomGetEventError, RoomMessageText
 
 from nyx_bot.errors import NyxBotRuntimeError
@@ -82,10 +83,17 @@ def strip_beginning_quote(original: str) -> str:
 
 def get_reply_to(event: Event) -> Optional[str]:
     content = event.source.get("content")
-    reply_to = ((content.get("m.relates_to") or {}).get("m.in_reply_to") or {}).get(
-        "event_id"
-    )
+    reply_to = content.get("m.relates_to", {}).get("m.in_reply_to", {}).get("event_id")
     return reply_to
+
+
+def get_bot_event_type(event: Event) -> Optional[str]:
+    if is_bot_event(event):
+        content = event.source.get("content")
+        type = content.get("io.github.shadowrz.nyx_bot", {}).get("type")
+        return type
+    else:
+        return None
 
 
 def is_bot_event(event: Event) -> bool:
@@ -95,7 +103,7 @@ def is_bot_event(event: Event) -> bool:
 
 def get_replaces(event: Event) -> Optional[str]:
     content = event.source.get("content")
-    relates_to = content.get("m.relates_to") or {}
+    relates_to = content.get("m.relates_to", {})
     rel_type = relates_to.get("rel_type")
     if rel_type == "m.replace":
         event_id = relates_to.get("event_id")
@@ -237,6 +245,10 @@ def should_enable_randomdraw(room_features, room_id: str) -> bool:
     return room_features[room_id]["randomdraw"]
 
 
+def should_enable_join_confirm(room_features, room_id: str) -> bool:
+    return room_features[room_id]["join_confirm"]
+
+
 # A structure for a Matrix UID. It also supports legacy UID formats.
 # First part: [\!-9\;-\~]+
 # Matches legacy UIDs too.
@@ -252,3 +264,11 @@ MATRIX_UID_RE = r"@([\!-9\;-\~]+):([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}|\
 def get_user_id_parts(user_id: str) -> Tuple[str, str]:
     uid, domain = re.match(MATRIX_UID_RE, user_id).groups()
     return (uid, domain)
+
+
+REACTIONS = ["🎉", "🤣", "😃", "😋", "🥳", "🤔", "😅"]
+
+
+def hash_user_id(user_id: str):
+    hash = xxhash.xxh64_intdigest(user_id)
+    return REACTIONS[hash % len(REACTIONS)]

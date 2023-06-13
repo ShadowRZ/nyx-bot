@@ -60,6 +60,7 @@ encryption = false
 jerryxiao = false # Controls Jerry Xiao like feature.
 randomdraw = false
 record_messages = false # Controls recording message content.
+join_confirm = false # Enable join confirming.
 
 # # Toogle this room's room features.
 # # You don't need to specify all of them.

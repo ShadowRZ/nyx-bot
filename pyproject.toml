@@ -19,6 +19,7 @@ dependencies = [
     "python-dateutil",
     "wordcloud",
     "aiohttp",
+    "xxhash",
 ]
 classifiers=[
     "License :: OSI Approved :: Apache Software License",

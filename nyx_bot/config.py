@@ -123,6 +123,7 @@ class Config:
             "jerryxiao": False,
             "randomdraw": False,
             "record_messages": False,
+            "join_confirm": False,
         }
         if "jerryxiao" in room_features_dict:
             room_features_default["jerryxiao"] = room_features_dict["jerryxiao"]
@@ -135,6 +136,9 @@ class Config:
                 "record_messages"
             ]
             del room_features_dict["record_messages"]
+        if "join_confirm" in room_features_dict:
+            room_features_default["join_confirm"] = room_features_dict["join_confirm"]
+            del room_features_dict["join_confirm"]
         self.room_features = defaultdict(lambda: room_features_default)
         for k, v in room_features_dict.items():
             if isinstance(v, dict):

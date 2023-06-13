@@ -5,7 +5,7 @@ import re
 import time
 from html import escape
 from io import BytesIO
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import magic
 from markdown import markdown
@@ -51,6 +51,7 @@ async def send_text_to_room(
     reply_to_event_id: Optional[str] = None,
     literal_text: Optional[bool] = False,
     literal_text_substitute: Optional[str] = None,
+    extended_data: Optional[Dict[Any, Any]] = None,
 ) -> Union[RoomSendResponse, ErrorResponse]:
     """Send text to a matrix room.
 
@@ -160,10 +161,10 @@ async def send_text_to_room(
         content["m.relates_to"] = {"m.in_reply_to": {"event_id": reply_to_event_id}}
 
     # Add custom data for tracking bot message.
-    content["io.github.shadowrz.nyx_bot"] = {
-        "in_reply_to": reply_to_event_id,
-        "type": "text",
-    }
+    content["io.github.shadowrz.nyx_bot"] = extended_data or {}
+    content["io.github.shadowrz.nyx_bot"]["in_reply_to"] = reply_to_event_id
+    if not content["io.github.shadowrz.nyx_bot"].get("type"):
+        content["io.github.shadowrz.nyx_bot"]["type"] = "text"
 
     try:
         return await client.room_send(

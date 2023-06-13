@@ -5,23 +5,30 @@ from nio import (
     AsyncClient,
     MatrixRoom,
     PowerLevels,
+    RoomGetEventError,
     RoomGetStateEventError,
     RoomMemberEvent,
     RoomMessageText,
+    RoomPutStateError,
     UnknownEvent,
 )
 
 from nyx_bot.bot_commands import Command
+from nyx_bot.chat_functions import send_text_to_room
 from nyx_bot.config import Config
 from nyx_bot.message_responses import Message
 from nyx_bot.storage import MatrixMessage, MembershipUpdates
 from nyx_bot.utils import (
+    get_bot_event_type,
     get_replaces,
     get_reply_to,
+    hash_user_id,
     is_bot_event,
     make_datetime,
+    should_enable_join_confirm,
     should_record_message_content,
     strip_beginning_quote,
+    user_name,
 )
 
 logger = logging.getLogger(__name__)
@@ -124,11 +131,63 @@ class Callbacks:
 
             reacted_to = relation_dict.get("event_id")
             if reacted_to and relation_dict.get("rel_type") == "m.annotation":
+                await self._reaction(room, event, reacted_to)
                 return
 
         logger.debug(
             f"Got unknown event with type to {event.type} from {event.sender} in {room.room_id}."
         )
+
+    async def _reaction(
+        self, room: MatrixRoom, event: UnknownEvent, reacted_to_id: str
+    ) -> None:
+        """A reaction was sent to one of our messages. Let's send a reply acknowledging it.
+
+        Args:
+            room: The room the reaction was sent in.
+
+            event: The reaction event.
+
+            reacted_to_id: The event ID that the reaction points to.
+        """
+        logger.debug(f"Got reaction to {room.room_id} from {event.sender}.")
+
+        # Get the original event that was reacted to
+        event_response = await self.client.room_get_event(room.room_id, reacted_to_id)
+        if isinstance(event_response, RoomGetEventError):
+            logger.warning(
+                "Error getting event that was reacted to (%s)", reacted_to_id
+            )
+            return
+        reacted_to_event = event_response.event
+        if (
+            is_bot_event(reacted_to_event)
+            and get_bot_event_type(reacted_to_event) == "join_confirm"
+        ):
+            content = reacted_to_event.source.get("content")
+            state_key = content.get("io.github.shadowrz.nyx_bot", {}).get("state_key")
+            required_reaction = hash_user_id(state_key)
+
+        reaction_content = (
+            event.source.get("content", {}).get("m.relates_to", {}).get("key")
+        )
+
+        if reaction_content == required_reaction:
+            state_resp = await self.client.room_get_state_event(
+                room.room_id, "m.room.power_levels"
+            )
+            if isinstance(state_resp, RoomGetStateEventError):
+                logger.debug(
+                    f"Failed to get power level data in room {room.display_name} ({room.room_id}). Stop processing."
+                )
+                return
+            content = state_resp.content
+            events = content.get("events")
+            users = content.get("users")
+            del users[state_key]
+            await self.client.room_put_state(
+                room.room_id, "m.room.power_levels", {"events": events, "users": users}
+            )
 
     async def membership(self, room: MatrixRoom, event: RoomMemberEvent) -> None:
         timestamp = make_datetime(event.server_timestamp)
@@ -138,6 +197,8 @@ class Callbacks:
             "invite",
             "leave",
         ):
+            if not should_enable_join_confirm(self.room_features, room.room_id):
+                return
             content = event.content or {}
             name = content.get("displayname")
             logger.debug(
@@ -152,10 +213,30 @@ class Callbacks:
                 )
                 return
             content = state_resp.content
-            powers = PowerLevels(
-                events=content.get("events"), users=content.get("users")
-            )
+            events = content.get("events")
+            events["m.reaction"] = -1
+            users = content.get("users")
+            powers = PowerLevels(events=events, users=users)
             if not powers.can_user_send_state(self.client.user, "m.room.power_levels"):
                 logger.debug(
                     f"Bot is unable to update power levels in {room.display_name} ({room.room_id}). Stop processing."
                 )
+                return
+            users[event.state_key] = -1
+            put_state_resp = await self.client.room_put_state(
+                room.room_id, "m.room.power_levels", {"events": events, "users": users}
+            )
+            if isinstance(put_state_resp, RoomPutStateError):
+                logger.warn(
+                    f"Failed to reconfigure power level: {put_state_resp.message}"
+                )
+                return
+            await send_text_to_room(
+                self.client,
+                room.room_id,
+                f"新加群的用户 {user_name(room, event.state_key)} ({event.state_key}) 请用 Reaction {hash_user_id(event.state_key)} 回复本条消息",
+                notice=True,
+                markdown_convert=False,
+                literal_text=True,
+                extended_data={"type": "join_confirm", "state_key": event.state_key},
+            )
