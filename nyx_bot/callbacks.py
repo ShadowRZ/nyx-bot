@@ -168,26 +168,26 @@ class Callbacks:
             state_key = content.get("io.github.shadowrz.nyx_bot", {}).get("state_key")
             required_reaction = hash_user_id(state_key)
 
-        reaction_content = (
-            event.source.get("content", {}).get("m.relates_to", {}).get("key")
-        )
+            reaction_content = (
+                event.source.get("content", {}).get("m.relates_to", {}).get("key")
+            )
 
-        if reaction_content == required_reaction:
-            state_resp = await self.client.room_get_state_event(
-                room.room_id, "m.room.power_levels"
-            )
-            if isinstance(state_resp, RoomGetStateEventError):
-                logger.debug(
-                    f"Failed to get power level data in room {room.display_name} ({room.room_id}). Stop processing."
+            if reaction_content == required_reaction:
+                state_resp = await self.client.room_get_state_event(
+                    room.room_id, "m.room.power_levels"
                 )
-                return
-            content = state_resp.content
-            events = content.get("events")
-            users = content.get("users")
-            del users[state_key]
-            await self.client.room_put_state(
-                room.room_id, "m.room.power_levels", {"events": events, "users": users}
-            )
+                if isinstance(state_resp, RoomGetStateEventError):
+                    logger.debug(
+                        f"Failed to get power level data in room {room.display_name} ({room.room_id}). Stop processing."
+                    )
+                    return
+                content = state_resp.content
+                events = content.get("events")
+                users = content.get("users")
+                del users[state_key]
+                await self.client.room_put_state(
+                    room.room_id, "m.room.power_levels", {"events": events, "users": users}
+                )
 
     async def membership(self, room: MatrixRoom, event: RoomMemberEvent) -> None:
         timestamp = make_datetime(event.server_timestamp)
