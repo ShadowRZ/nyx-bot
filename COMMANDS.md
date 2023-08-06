@@ -6,7 +6,7 @@
 * `send_as_sticker`: Turn an image into a sticker.
 * `multiquote [count]` / `forward_multiquote [count]`: (count is in [2, 6]) Make a new multiquote image.
 * `avatar_changes`: \[Depends on the database\] Get the target user's avatar change history.
-* `avatar_changes`: \[Depends on the database\] Get the target user's name change history.
+* `name_changes`: \[Depends on the database\] Get the target user's name change history.
 * `send_as_sticker`: Turns an image into a sticker.
 * `tag [#tag]`: \[Depends on the database\] Tag a user. The tag will be shown in quote images.
 * `remove_tag`: \[Depends on the database\] Removes tag of a user.
