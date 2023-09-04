@@ -35,6 +35,7 @@ from nyx_bot.utils import (
     make_divergence,
     parse_matrixdotto_link,
     parse_wordcloud_args,
+    tg_link_to_tdotme_link,
 )
 from nyx_bot.wordcloud import send_wordcloud
 
@@ -186,6 +187,8 @@ class Command:
         if not self.args:
             raise NyxBotValueError("No external URL given.")
         target_url = self.args[0]
+        if target_url.startswith("tg://resolve"):
+            target_url = tg_link_to_tdotme_link(target_url)
         result = (
             MatrixMessage.select()
             .where(

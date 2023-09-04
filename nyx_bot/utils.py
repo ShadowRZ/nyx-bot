@@ -5,7 +5,7 @@ from html.parser import HTMLParser
 from io import StringIO
 from random import Random
 from typing import Dict, Optional, Tuple
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 import xxhash
 from nio import AsyncClient, Event, MatrixRoom, RoomGetEventError, RoomMessageText
@@ -119,6 +119,14 @@ def get_external_url(event: Event) -> Optional[str]:
 def make_datetime(origin_server_ts: int):
     ts = origin_server_ts / 1000
     return datetime.fromtimestamp(ts)
+
+
+def tg_link_to_tdotme_link(tg_link: str):
+    parsed = urlparse(tg_link)
+    qs_parsed = parse_qs(parsed.query)
+    domain = qs_parsed["domain"][0]
+    post_id = qs_parsed["post"][0]
+    return f"https://t.me/{domain}/{post_id}"
 
 
 def parse_matrixdotto_link(link: str):
