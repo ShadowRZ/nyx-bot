@@ -365,7 +365,7 @@ class Command:
 
     async def _slow(self):
         global SLOW_MODE_ENABLED
-        if await self._check_slow():
+        if not await self._check_slow():
             return
         SLOW_MODE_ENABLED = True
         await send_text_to_room(
@@ -380,7 +380,7 @@ class Command:
 
     async def _slow_disable(self):
         global SLOW_MODE_ENABLED
-        if await self._check_slow():
+        if not await self._check_slow():
             return
         SLOW_MODE_ENABLED = False
         await send_text_to_room(
