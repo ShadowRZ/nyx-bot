@@ -11,7 +11,9 @@ from nio import (
     AsyncClient,
     JoinedMembersError,
     MatrixRoom,
+    PowerLevels,
     RoomGetEventError,
+    RoomGetStateEventError,
     RoomMessageImage,
     RoomMessageText,
     StickerEvent,
@@ -40,6 +42,8 @@ from nyx_bot.utils import (
 from nyx_bot.wordcloud import send_wordcloud
 
 logger = logging.getLogger(__name__)
+SLOW_MODE_ENABLED = False
+LAST_DELTA = 0
 
 
 class Command:
@@ -77,9 +81,16 @@ class Command:
         self.reply_to = reply_to
         self.replace_map = replace_map
         self.command_prefix = command_prefix
+        global LAST_DELTA
+        LAST_DELTA = event.server_timestamp
 
     async def process(self):
         """Process the command"""
+        global LAST_DELTA
+        global SLOW_MODE_ENABLED
+        dt = self.event.server_timestamp - LAST_DELTA
+        if SLOW_MODE_ENABLED and dt < 60000:
+            return
         try:
             await self._process()
         except Exception as inst:
@@ -138,6 +149,10 @@ class Command:
             await self._servers()
         elif self.command == "lookup_message":
             await self._lookup_message()
+        elif self.command == "slow":
+            await self._slow()
+        elif self.command == "slow_disable":
+            await self._slow_disable()
         else:
             await self._unknown_command()
 
@@ -327,6 +342,51 @@ class Command:
             self.client,
             self.room.room_id,
             "Done.",
+            notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
+
+    async def _check_slow(self):
+        state_resp = await self.client.room_get_state_event(
+            self.room.room_id, "m.room.power_levels"
+        )
+        if isinstance(state_resp, RoomGetStateEventError):
+            logger.debug(
+                f"Failed to get power level data in room {self.room.display_name} ({self.room.room_id})."
+            )
+            return
+        content = state_resp.content
+        events = content.get("events")
+        users = content.get("users")
+        powers = PowerLevels(events=events, users=users)
+        return powers.can_user_kick(self.event.sender)
+
+    async def _slow(self):
+        global SLOW_MODE_ENABLED
+        if self._check_slow():
+            return
+        SLOW_MODE_ENABLED = True
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            "Slow mode enabled.",
+            notice=False,
+            markdown_convert=False,
+            reply_to_event_id=self.event.event_id,
+            literal_text=True,
+        )
+
+    async def _slow_disable(self):
+        global SLOW_MODE_ENABLED
+        if self._check_slow():
+            return
+        SLOW_MODE_ENABLED = False
+        await send_text_to_room(
+            self.client,
+            self.room.room_id,
+            "Slow mode disabled.",
             notice=False,
             markdown_convert=False,
             reply_to_event_id=self.event.event_id,

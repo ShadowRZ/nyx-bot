@@ -105,7 +105,7 @@ async def main():
                     )
 
                     # Check if login failed
-                    if type(login_response) == LoginError:
+                    if login_response is LoginError:
                         logger.error("Failed to login: %s", login_response.message)
                         return False
                 except LocalProtocolError as e:
