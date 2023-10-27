@@ -42,7 +42,10 @@ async def get_word_freqs(texts):
     lines = stdout.decode().splitlines()
     for line in lines:
         word, freq = line.split(None, 1)
-        freqs[word] = int(freq)
+        if len(word) == 1 and word.isascii():
+            continue
+        else:
+            freqs[word] = int(freq)
 
     return freqs
 
